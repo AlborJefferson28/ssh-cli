@@ -1,0 +1,44 @@
+# Archivos de desarrollo
+node_modules/
+*.log
+*.tmp
+.env
+.env.local
+.env.*.local
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos de testing
+test/
+tests/
+*.test.js
+*.test.mjs
+coverage/
+
+# Archivos de build/dist
+dist/
+build/
+
+# Archivos específicos del proyecto local
+process/
+logs/
+ssh-processes.json
+
+# Git
+.git/
+.gitignore
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Documentos de desarrollo
+CONTRIBUTING.md
+.github/
+
+# Scripts de desarrollo local
+install.sh

@@ -1,16 +1,59 @@
 {
-  "name": "ssh-cli",
+  "name": "@alborjefferson/ssh-remote-executor",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "description": "CLI para gestionar conexiones SSH y ejecutar comandos remotos con detección automática de contraseñas sudo",
+  "main": "index.mjs",
+  "type": "module",
+  "bin": {
+    "ssh-cli": "./index.mjs"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.mjs",
+    "install-global": "./install.sh",
+    "postinstall": "node postinstall.mjs"
+  },
+  "keywords": [
+    "ssh",
+    "cli",
+    "remote",
+    "automation",
+    "devops",
+    "server",
+    "terminal",
+    "sudo",
+    "ubuntu",
+    "linux"
+  ],
+  "author": {
+    "name": "Jefferson Albor",
+    "email": "tu-email@ejemplo.com",
+    "url": "https://github.com/AlborJefferson28"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/AlborJefferson28/ssh-cli#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlborJefferson28/ssh-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AlborJefferson28/ssh-cli/issues"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "preferGlobal": true,
   "dependencies": {
     "inquirer": "^12.9.6",
     "ssh2": "^1.17.0"
-  }
+  },
+  "devDependencies": {},
+  "files": [
+    "index.mjs",
+    "postinstall.mjs",
+    "docs/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ]
 }
