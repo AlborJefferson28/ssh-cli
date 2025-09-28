@@ -1,8 +1,9 @@
-# SSH CLI - Remote Command Executor
+# SSH Remote Command Executor
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/tu-usuario/ssh-cli)
+[![npm version](https://badge.fury.io/js/@alborjefferson%2Fssh-remote-executor.svg)](https://www.npmjs.com/package/@alborjefferson/ssh-remote-executor)
 [![Node.js](https://img.shields.io/badge/node.js-%3E%3D16.0.0-green.svg)](https://nodejs.org/)
 [![Ubuntu](https://img.shields.io/badge/ubuntu-tested-orange.svg)](https://ubuntu.com/)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con detección automática de contraseñas sudo.
 
@@ -19,11 +20,23 @@ Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con det
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## 🚀 Instalación Rápida
+## 🚀 Instalación
+
+### Desde npm (Recomendado)
+
+```bash
+# Instalación global
+npm install -g @alborjefferson/ssh-remote-executor
+
+# ¡Usar inmediatamente!
+ssh-cli help
+```
+
+### Desde código fuente
 
 ```bash
 # 1. Clonar el repositorio
-git clone [URL_DEL_REPOSITORIO]
+git clone https://github.com/AlborJefferson28/ssh-cli.git
 cd ssh-cli
 
 # 2. Instalar dependencias
