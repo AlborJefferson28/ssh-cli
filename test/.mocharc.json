@@ -1,0 +1,19 @@
+{
+  "name": "mocha",
+  "version": "10.2.0",
+  "reporter": ["spec", "json"],
+  "timeout": 10000,
+  "recursive": true,
+  "require": ["./test/helpers/setup.js"],
+  "spec": [
+    "test/unit/**/*.test.js",
+    "test/integration/**/*.test.js"
+  ],
+  "exclude": [
+    "node_modules/**",
+    "coverage/**"
+  ],
+  "colors": true,
+  "bail": false,
+  "fullTrace": true
+}

@@ -230,7 +230,50 @@ ssh-cli start
 - **Ubuntu Linux** (probado)
 - **Acceso SSH** a servidores remotos
 
-## 🤝 Contribuir
+## � Testing
+
+Este proyecto incluye una suite completa de tests unitarios e integración para garantizar la calidad y confiabilidad del código.
+
+### Ejecutar Tests
+
+```bash
+# Instalar dependencias de testing
+cd test && npm install
+
+# Ejecutar todos los tests
+npm test
+
+# Solo tests unitarios
+npm run test:unit
+
+# Solo tests de integración  
+npm run test:integration
+
+# Tests con cobertura
+npm run test:coverage
+
+# Tests en modo watch
+npm run test:watch
+
+# Script de conveniencia
+./test/run-tests.sh
+```
+
+### Cobertura de Tests
+
+La suite de tests cubre:
+- ✅ **Sistema de archivos**: Carga/guardado de procesos
+- ✅ **Gestión de procesos**: CRUD completo con validaciones
+- ✅ **Detección de contraseñas**: Patrones sudo y prompts
+- ✅ **Validaciones**: Todas las validaciones de entrada
+- ✅ **Procesamiento de comandos**: Contexto y ejecución
+- ✅ **Navegación interactiva**: Menús y selección
+- ✅ **Conexiones SSH**: Integración completa
+- ✅ **End-to-end**: Flujos completos del usuario
+
+Ver [documentación de tests](test/README.md) para detalles completos.
+
+## �🤝 Contribuir
 
 ¡Las contribuciones son bienvenidas! Ver [CONTRIBUTING.md](CONTRIBUTING.md) para detalles.
 

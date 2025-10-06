@@ -94,6 +94,14 @@ id_rsa.pub
 coverage/
 .coverage
 
+# Test directories and files
+/test/node_modules/
+/test/coverage/
+/test/.nyc_output/
+/test/test-results/
+/test/*.log
+/test/.env.test
+
 # Build outputs
 dist/
 build/
