@@ -62,28 +62,27 @@ export class TestUtils {
 
   static async simulateInquirerPrompts(answers) {
     const inquirer = await import('inquirer');
-    const originalPrompt = inquirer.default.prompt;
+    const originalPrompt = inquirer.default?.prompt || inquirer.prompt;
     
-    inquirer.default.prompt = async (questions) => {
-      const results = {};
-      
-      if (Array.isArray(questions)) {
-        questions.forEach(q => {
-          if (answers[q.name] !== undefined) {
-            results[q.name] = answers[q.name];
-          }
-        });
-      } else {
-        if (answers[questions.name] !== undefined) {
-          results[questions.name] = answers[questions.name];
-        }
-      }
-      
+    const mockPrompt = async (questions) => {
       return results;
     };
     
-    return () => {
-      inquirer.default.prompt = originalPrompt;
+    // Mock both possible locations
+    if (inquirer.default) {
+      inquirer.default.prompt = mockPrompt;
+    } else {
+      inquirer.prompt = mockPrompt;
+    }
+    
+    return {
+      restore: () => {
+        if (inquirer.default) {
+          inquirer.default.prompt = originalPrompt;
+        } else {
+          inquirer.prompt = originalPrompt;
+        }
+      }
     };
   }
 
@@ -94,18 +93,23 @@ export class TestUtils {
           if (event === 'close') {
             callback(0); // Exit code 0
           } else if (event === 'data') {
-            callback('Mock command output\n');
+            callback(Buffer.from('Mock command output\n'));
           }
         }, 10);
         return this;
       },
       write: function(data) {
-        // Mock de write
+        // Mock de write - simulate successful write
+        return true;
       },
       stderr: {
         on: function(event, callback) {
           return this;
         }
+      },
+      end: function() {
+        // Mock de end
+        return this;
       }
     };
   }
@@ -132,7 +136,53 @@ export class TestUtils {
         }
         
         setTimeout(() => {
-          callback(null, TestUtils.createMockSSHStream());
+          // Simular diferentes tipos de comandos
+          let stream;
+          if (command.includes('sudo')) {
+            // Mock stream que simula prompt de contraseña
+            stream = {
+              ...TestUtils.createMockSSHStream(),
+              on: function(event, callback) {
+                setTimeout(() => {
+                  if (event === 'data') {
+                    callback(Buffer.from('[sudo] password for user:'));
+                  } else if (event === 'close') {
+                    callback(0);
+                  }
+                }, 10);
+                return this;
+              }
+            };
+          } else if (command.includes('nonexistentcommand')) {
+            // Mock command not found
+            stream = {
+              ...TestUtils.createMockSSHStream(),
+              on: function(event, callback) {
+                setTimeout(() => {
+                  if (event === 'data') {
+                    callback(Buffer.from(''));
+                  } else if (event === 'close') {
+                    callback(127); // Command not found exit code
+                  }
+                }, 10);
+                return this;
+              },
+              stderr: {
+                on: function(event, callback) {
+                  if (event === 'data') {
+                    setTimeout(() => {
+                      callback(Buffer.from('command not found'));
+                    }, 10);
+                  }
+                  return this;
+                }
+              }
+            };
+          } else {
+            stream = TestUtils.createMockSSHStream();
+          }
+          
+          callback(null, stream);
         }, 10);
         
         return this;

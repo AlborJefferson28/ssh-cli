@@ -62,7 +62,14 @@ describe('✅ Validaciones del CLI', function() {
 
   describe('Validación de Puerto', function() {
     const validatePort = (input) => {
-      const port = parseInt(input);
+      if (!input || input.trim() === '') {
+        return "Puerto inválido. Debe ser un número entre 1 y 65535.";
+      }
+      // Verificar que sea un número entero válido (sin decimales)
+      if (!/^\d+$/.test(input.trim())) {
+        return "Puerto inválido. Debe ser un número entre 1 y 65535.";
+      }
+      const port = parseInt(input, 10);
       if (isNaN(port) || port < 1 || port > 65535) {
         return "Puerto inválido. Debe ser un número entre 1 y 65535.";
       }
@@ -263,7 +270,14 @@ describe('✅ Validaciones del CLI', function() {
 
   describe('Validación de IDs de Proceso', function() {
     const validateProcessId = (input, maxProcesses) => {
-      const id = parseInt(input);
+      if (!input || input.trim() === '') {
+        return "ID de proceso inválido. Debe ser un número mayor a 0.";
+      }
+      // Verificar que sea un número entero válido (sin decimales)
+      if (!/^\d+$/.test(input.trim())) {
+        return "ID de proceso inválido. Debe ser un número mayor a 0.";
+      }
+      const id = parseInt(input, 10);
       if (isNaN(id) || id <= 0) {
         return "ID de proceso inválido. Debe ser un número mayor a 0.";
       }

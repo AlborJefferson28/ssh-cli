@@ -50,7 +50,7 @@
   },
   "preferGlobal": true,
   "dependencies": {
-    "inquirer": "^12.9.6",
+    "inquirer": "^8.2.6",
     "ssh2": "^1.17.0"
   },
   "devDependencies": {

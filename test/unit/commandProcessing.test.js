@@ -403,7 +403,7 @@ describe('⚙️ Procesamiento de Comandos', function() {
       const result = generateCommandLog(command, output, exitCode, duration, directory);
 
       // Assert
-      expect(result.logEntry.timestamp).to.match(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/);
+      expect(result.logEntry.timestamp).to.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
       expect(new Date(result.logEntry.timestamp)).to.be.instanceOf(Date);
     });
   });

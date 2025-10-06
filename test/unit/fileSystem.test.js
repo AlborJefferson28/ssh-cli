@@ -240,7 +240,7 @@ describe('🗂️ Sistema de Archivos', function() {
 
       // Assert
       const savedContent = fsStub.writeFileSync.firstCall.args[1];
-      expect(savedContent).to.include('\\n'); // JSON formateado
+      expect(savedContent).to.include('\n'); // JSON formateado
       expect(savedContent).to.include('  '); // Indentación
     });
   });

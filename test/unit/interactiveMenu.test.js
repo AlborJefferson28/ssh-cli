@@ -13,7 +13,9 @@ describe('🖱️ Navegación Interactiva', function() {
 
   afterEach(function() {
     consoleStub.restore();
-    if (inquirerStub) {
+    if (inquirerStub && typeof inquirerStub.restore === 'function') {
+      inquirerStub.restore();
+    } else if (inquirerStub && typeof inquirerStub === 'function') {
       inquirerStub();
     }
   });
