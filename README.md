@@ -5,13 +5,6 @@
 [![Ubuntu](https://img.shields.io/badge/ubuntu-tested-orange.svg)](https://ubuntu.com/)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-# SSH Remote Command Executor
-
-[![npm version](https://badge.fury.io/js/@alborjefferson%2Fssh-remote-executor.svg)](https://www.npmjs.com/package/@alborjefferson/ssh-remote-executor)
-[![Node.js](https://img.shields.io/badge/node.js-%3E%3D16.0.0-green.svg)](https://nodejs.org/)
-[![Ubuntu](https://img.shields.io/badge/ubuntu-tested-orange.svg)](https://ubuntu.com/)
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
 Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con detección automática de contraseñas sudo y **modo debug avanzado** para solución de problemas en tiempo real.
 
 ```
@@ -37,18 +30,6 @@ Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con det
 - 🎨 **Interfaz Intuitiva**: Menús interactivos con navegación visual
 - ⚡ **Ejecución Rápida**: Acceso directo por ID de host y posición
 
-```
-╔══════════════════════════════════════════════════════════════╗
-║                                                              ║
-║              _____ _____ _   _     _____  _     _            ║
-║             |   __|   __| |_| |   |  ___|| |   | |           ║
-║             |___  |___  |  _  |   | |___ | |___| |           ║
-║             |_____|_____|_| |_|   |_____||_____|_|           ║
-║                                                              ║
-║             🚀 SSH Remote Command Executor v1.0.0            ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
-```
 
 ## 🚀 Instalación
 
@@ -126,16 +107,6 @@ El modo debug te coloca **directamente en el log completo** con una línea de co
 - **Historial de comandos**: Navegación rápida por comandos anteriores
 
 ```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                        � LOG COMPLETO DE EJECUCIÓN                        ║
-╠═══════════════════════════════════════════════════════════════════════════════╣
-║ 🏠 Host: Servidor Web                                                        ║
-║ 🌐 Servidor: web-server.empresa.com:22                                       ║
-║ 👤 Usuario: deploy                                                           ║
-║ 📊 Progreso: 3/5 comandos                                                    ║
-║ ⚠️  Error en: sudo systemctl restart nginx                                   ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-
 📋 HISTORIAL DE COMANDOS:
 ════════════════════════════════════════════════════════════════════════════════
 ✅ COMANDO 1: cd /var/www/app
@@ -153,12 +124,7 @@ El modo debug te coloca **directamente en el log completo** con una línea de co
   Job for nginx.service failed because...
   └─ Código de salida: 1
 
-════════════════════════════════════════════════════════════════════════════════
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                            � MODO DEBUG ACTIVO                            ║
-╠═══════════════════════════════════════════════════════════════════════════════╣
-║ 💡 Atajos: Ctrl+Q=Salir | Ctrl+X=Finalizar | Ctrl+L=Log | Ctrl+H=Ayuda   ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
+💡 Atajos: Ctrl+Q=Salir | Ctrl+X=Finalizar | Ctrl+L=Log | Ctrl+H=Ayuda
 
 🔧 debug@Servidor Web:~$ 
 ```
