@@ -1,6 +1,6 @@
 {
   "name": "@alborjefferson/ssh-remote-executor",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "CLI para gestionar conexiones SSH y ejecutar comandos remotos con detección automática de contraseñas sudo",
   "main": "index.mjs",
   "type": "module",
@@ -8,8 +8,14 @@
     "ssh-cli": "./index.mjs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.mjs",
+    "test": "mocha test/**/*.test.js --timeout 10000",
+    "test:unit": "mocha test/unit/**/*.test.js --timeout 5000",
+    "test:integration": "mocha test/integration/**/*.test.js --timeout 15000",
+    "test:watch": "mocha test/**/*.test.js --timeout 10000 --watch",
+    "test:coverage": "c8 --reporter=html --reporter=text mocha test/**/*.test.js --timeout 10000",
+    "test:debug": "mocha test/**/*.test.js --timeout 0 --inspect-brk",
+    "test:ci": "c8 --reporter=lcov --reporter=text-summary mocha test/**/*.test.js --timeout 10000",
     "install-global": "./install.sh",
     "postinstall": "node postinstall.mjs"
   },
@@ -44,10 +50,16 @@
   },
   "preferGlobal": true,
   "dependencies": {
-    "inquirer": "^12.9.6",
+    "inquirer": "^8.2.6",
     "ssh2": "^1.17.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "mocha": "^10.2.0",
+    "chai": "^4.3.8",
+    "sinon": "^16.0.0",
+    "c8": "^8.0.1",
+    "mock-fs": "^5.2.0"
+  },
   "files": [
     "index.mjs",
     "postinstall.mjs",
