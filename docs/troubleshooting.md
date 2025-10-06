@@ -1,5 +1,104 @@
 # 🔧 Solución de Problemas
 
+## 🚨 Problemas Comunes del Modo Debug
+
+### Problema: El modo debug no se activa cuando hay errores
+
+**Síntomas:**
+- Un comando falla pero no aparece la opción de modo debug
+- El proceso se termina inmediatamente después del error
+- No se muestra el menú de opciones post-error
+
+**Soluciones:**
+```bash
+# 1. Verificar que el proceso se está ejecutando en modo interactivo
+ssh-cli  # (sin argumentos para modo interactivo)
+
+# 2. Asegúrate de que el comando realmente está fallando
+# El modo debug solo se activa con códigos de salida != 0
+
+# 3. Verificar logs para ver si hay errores de conexión
+ls -la logs/ssh-log-*.txt | tail -5
+```
+
+### Problema: Los atajos de teclado no funcionan en modo debug
+
+**Síntomas:**
+- Ctrl+Q, Ctrl+X no responden
+- Los atajos no salen del modo debug
+- El modo debug se comporta como terminal normal
+
+**Soluciones:**
+```bash
+# 1. Verificar compatibilidad del terminal
+echo $TERM
+# Debe mostrar algo como: xterm-256color, screen, etc.
+
+# 2. Si usas tmux/screen, verificar configuración
+# Algunos multiplexores interceptan Ctrl+X
+
+# 3. Alternativa: usar Ctrl+C para menú visual
+# Ctrl+C siempre mostrará el menú de opciones
+
+# 4. En caso extremo, usar Ctrl+D o cerrar terminal
+```
+
+### Problema: El modo debug no muestra el log completo
+
+**Síntomas:**
+- Solo aparece la línea de comandos
+- No se ve el historial de comandos ejecutados
+- Falta información del host/usuario
+
+**Soluciones:**
+```bash
+# 1. Usar Ctrl+L para refrescar el log
+# Esto limpia pantalla y muestra todo el historial
+
+# 2. Verificar tamaño de terminal
+# El log se adapta al ancho de terminal (80 caracteres mínimo)
+
+# 3. Si el log es muy largo, se trunca automáticamente
+# Usa comandos como 'tail' para ver información específica
+```
+
+### Problema: Los comandos debug no funcionan
+
+**Síntomas:**
+- Los comandos en modo debug no se ejecutan
+- Error "conexión cerrada" durante debug
+- Timeout en comandos debug
+
+**Soluciones:**
+```bash
+# 1. Verificar que la conexión SSH sigue activa
+# El modo debug usa la misma conexión que el proceso principal
+
+# 2. Probar comandos simples primero
+# En modo debug, empezar con: pwd, ls, whoami
+
+# 3. Si la conexión se perdió, reiniciar el proceso
+# El modo debug no puede recuperar conexiones perdidas
+```
+
+### Problema: No puedo salir del modo debug
+
+**Síntomas:**
+- Las opciones "Salir del modo debug" no funcionan
+- Quedo atrapado en el loop de debug
+- El CLI no responde
+
+**Soluciones:**
+```bash
+# 1. Usar Ctrl+C para forzar salida del CLI
+# Esto cerrará toda la aplicación
+
+# 2. En modo debug, elegir "Finalizar conexión"
+# Esto terminará el proceso completamente
+
+# 3. Reiniciar terminal si es necesario
+```
+
 ## 🚨 Problemas Comunes del Modo Interactivo
 
 ### Problema: El modo interactivo no se muestra correctamente
@@ -1144,6 +1243,131 @@ find / -name "*.txt"  # Miles de líneas
 # Usar:
 find /var/www -name "*.txt" | head -50
 find / -name "*.txt" 2>/dev/null | head -100
+```
+
+## 🔧 Guía Completa del Modo Debug
+
+### ¿Cuándo usar el Modo Debug?
+
+El modo debug se activa automáticamente cuando:
+- Un comando retorna un código de salida diferente de 0
+- Hay errores de permisos
+- Fallan comandos críticos del sistema
+- Servicios no se inician correctamente
+
+### Funcionalidades del Modo Debug
+
+#### 1. **Ejecución de Comandos en Tiempo Real**
+```bash
+# Ejemplos de comandos debug útiles:
+ps aux | grep nginx          # Verificar procesos
+systemctl status nginx      # Estado del servicio
+tail -f /var/log/nginx/error.log  # Ver logs en tiempo real
+ls -la /etc/nginx/           # Verificar archivos de configuración
+nginx -t                     # Probar configuración
+```
+
+#### 2. **Visualización del Log Completo**
+- Ve todo el historial de comandos ejecutados
+- Output completo de cada comando
+- Códigos de salida y errores
+
+#### 3. **Opciones de Continuación Flexibles**
+```
+🔄 ¿Cómo deseas continuar?
+  🔄 Reiniciar proceso desde el inicio     # Empezar todo de nuevo
+  ▶️  Continuar desde el comando que falló  # Reintentar el comando fallido
+  ⏭️  Saltar comando fallido y continuar   # Omitir y seguir
+  🚪 Finalizar proceso completamente      # Terminar todo
+```
+
+### Estrategias de Debug por Tipo de Error
+
+#### Errores de Permisos
+```bash
+# En modo debug, ejecutar:
+ls -la                       # Ver permisos del directorio
+whoami                       # Verificar usuario actual
+groups                       # Ver grupos del usuario
+sudo -l                      # Ver permisos sudo disponibles
+```
+
+#### Errores de Servicios
+```bash
+# Para servicios que fallan:
+systemctl status servicio    # Estado detallado
+journalctl -u servicio -n 50 # Logs recientes
+systemctl list-dependencies servicio # Dependencias
+```
+
+#### Errores de Red/Conectividad
+```bash
+# Diagnóstico de red:
+ping -c 3 google.com         # Conectividad básica
+netstat -tlnp                # Puertos abiertos
+ss -tlnp                     # Alternativa moderna
+curl -I http://localhost     # Probar servicios web
+```
+
+#### Errores de Archivos/Paths
+```bash
+# Verificación de archivos:
+pwd                          # Directorio actual
+find . -name "archivo"       # Buscar archivos
+file /ruta/archivo           # Tipo de archivo
+head -20 /ruta/archivo       # Ver contenido
+```
+
+### Mejores Prácticas en Modo Debug
+
+#### 1. **Diagnóstico Sistemático**
+```bash
+# Secuencia recomendada:
+pwd                          # ¿Dónde estoy?
+whoami                       # ¿Quién soy?
+echo $PATH                   # ¿Variables correctas?
+ls -la                       # ¿Qué hay aquí?
+```
+
+#### 2. **Comandos Seguros**
+```bash
+# Comandos que NO modifican el sistema:
+ps aux                       # Ver procesos
+df -h                        # Espacio en disco
+free -h                      # Memoria disponible
+uptime                       # Carga del sistema
+```
+
+#### 3. **Cuando Salir del Debug**
+- ✅ **Salir del debug** si identificaste y puedes corregir el problema
+- ✅ **Finalizar conexión** si el problema requiere intervención externa
+- ✅ **Reiniciar proceso** si solucionaste la causa raíz
+
+### Casos de Uso Avanzados
+
+#### Depuración de Scripts de Deployment
+```bash
+# En modo debug para deployments:
+git status                   # Estado del repositorio
+git log -3 --oneline         # Últimos commits
+npm list --depth=0           # Dependencias instaladas
+pm2 list                     # Procesos PM2
+```
+
+#### Análisis de Performance
+```bash
+# Para problemas de rendimiento:
+top -n 1                     # CPU usage
+iostat 1 3                   # I/O stats
+sar -u 1 3                   # System activity
+```
+
+#### Troubleshooting de Base de Datos
+```bash
+# Para problemas de DB:
+systemctl status mysql       # Estado del servicio DB
+mysql -e "SHOW PROCESSLIST;" # Procesos activos
+df -h /var/lib/mysql         # Espacio de DB
 ```
 
 ## 🔧 Modificaciones del Código

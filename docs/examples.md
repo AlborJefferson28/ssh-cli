@@ -1,6 +1,133 @@
 # 💡 Ejemplos de Uso
 
-## 🖱️ Ejemplos en Modo Interactivo (Recomendado)
+## � Ejemplos con Modo Debug
+
+### 1. Deployment con Error y Debug
+
+**Escenario:** Un proceso de deployment falla en medio de la ejecución
+
+**Ejecutar:** `node index.mjs`
+
+**Proceso de Deployment:**
+1. Crear proceso con comandos:
+   ```bash
+   cd /var/www/app
+   git pull origin main
+   npm install
+   sudo systemctl restart nginx  # ← Este comando falla
+   sudo systemctl status nginx
+   ```
+
+2. **Error Detectado:**
+   ```
+   ⚠️  Error detectado en el comando: sudo systemctl restart nginx
+   🔧 Código de salida: 1
+   🔧 ¿Cómo deseas proceder?
+     > 🔧 Entrar en modo debug
+       ⏭️  Saltar este comando y continuar
+       🚪 Finalizar proceso
+   ```
+
+3. **Modo Debug Activo:**
+   ```
+   ╔═════════════════════════════════════════════════════════════╗
+   ║                🔧 MODO DEBUG SSH                        ║
+   ╚═════════════════════════════════════════════════════════════╝
+   🏠 Host: Servidor Web
+   🌐 Servidor: web-server.empresa.com:22
+   👤 Usuario: deploy
+   📊 Comando actual: 4/5
+   ⚠️  Error detectado en: sudo systemctl restart nginx
+   
+   📋 LOG DE COMANDOS EJECUTADOS:
+   ✅ 1. cd /var/www/app
+   ✅ 2. git pull origin main
+   ✅ 3. npm install
+   ❌ 4. sudo systemctl restart nginx
+   
+   🔧 Selecciona una acción:
+     > ⌨️  Ejecutar comando debug
+       📋 Ver log completo
+       🔄 Salir del modo debug (volver al proceso)
+       🚪 Finalizar conexión completamente
+   ```
+
+4. **Diagnóstico en Debug:**
+   ```bash
+   🔧 Comando debug: nginx -t
+   
+   # Output:
+   nginx: [emerg] bind() to 0.0.0.0:80 failed (98: Address already in use)
+   nginx: configuration file /etc/nginx/nginx.conf test failed
+   
+   🔧 Comando debug: sudo lsof -i :80
+   
+   # Output:
+   apache2   1234 www-data    4u  IPv6  0x123456      0t0  TCP *:http (LISTEN)
+   ```
+
+5. **Solución del Problema:**
+   ```bash
+   🔧 Comando debug: sudo systemctl stop apache2
+   🔧 Comando debug: sudo systemctl restart nginx
+   🔧 Comando debug: sudo systemctl status nginx
+   
+   # Output: ● nginx.service - A high performance web server
+   #         Active: active (running) since...
+   ```
+
+6. **Opciones Post-Debug:**
+   ```
+   🔄 Salir del modo debug (volver al proceso)
+   
+   ╔═════════════════════════════════════════════════════════════╗
+   ║             🔄 OPCIONES POST-DEBUG                      ║
+   ╚═════════════════════════════════════════════════════════════╝
+   📝 Proceso: Deployment Producción
+   📊 Progreso: 3/5 comandos
+   ⚠️  Error en comando: sudo systemctl restart nginx
+   📋 Comandos restantes: 2
+   
+   🔄 ¿Cómo deseas continuar?
+     > ▶️  Continuar desde el comando que falló
+       ⏭️  Saltar comando fallido y continuar
+       🔄 Reiniciar proceso desde el inicio
+       🚪 Finalizar proceso completamente
+   ```
+
+### 2. Troubleshooting de Base de Datos
+
+**Escenario:** Un script de migración de base de datos falla
+
+**Comandos del Proceso:**
+```bash
+cd /opt/migrations
+sudo systemctl status mysql
+mysql -u root -p < migration-001.sql  # ← Falla aquí
+mysql -u root -p < migration-002.sql
+sudo systemctl restart app-backend
+```
+
+**Debug Interactivo:**
+```bash
+🔧 Comando debug: mysql -u root -p -e "SHOW DATABASES;"
+# Error: Access denied for user 'root'@'localhost'
+
+🔧 Comando debug: sudo mysql -e "SHOW DATABASES;"
+# ✅ Funciona con sudo
+
+🔧 Comando debug: sudo mysql -e "SELECT User, Host FROM mysql.user WHERE User='root';"
+# ✅ Identifica problema de autenticación
+```
+
+**Solución aplicada en debug:**
+```bash
+🔧 Comando debug: sudo mysql < migration-001.sql
+🔧 Comando debug: sudo mysql < migration-002.sql
+# ✅ Migraciones aplicadas correctamente
+```
+
+## �🖱️ Ejemplos en Modo Interactivo (Recomendado)
 
 ### 1. Deploy Automático Comando 11: sudo systemctl status redis
 ```

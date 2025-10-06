@@ -5,7 +5,37 @@
 [![Ubuntu](https://img.shields.io/badge/ubuntu-tested-orange.svg)](https://ubuntu.com/)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con detección automática de contraseñas sudo.
+# SSH Remote Command Executor
+
+[![npm version](https://badge.fury.io/js/@alborjefferson%2Fssh-remote-executor.svg)](https://www.npmjs.com/package/@alborjefferson/ssh-remote-executor)
+[![Node.js](https://img.shields.io/badge/node.js-%3E%3D16.0.0-green.svg)](https://nodejs.org/)
+[![Ubuntu](https://img.shields.io/badge/ubuntu-tested-orange.svg)](https://ubuntu.com/)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con detección automática de contraseñas sudo y **modo debug avanzado** para solución de problemas en tiempo real.
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║              _____ _____ _   _     _____  _     _            ║
+║             |   __|   __| |_| |   |  ___|| |   | |           ║
+║             |___  |___  |  _  |   | |___ | |___| |           ║
+║             |_____|_____|_| |_|   |_____||_____|_|           ║
+║                                                              ║
+║             🚀 SSH Remote Command Executor v1.0.0            ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+## 🌟 Características Principales
+
+- 🔧 **Modo Debug Interactivo**: Depura problemas en tiempo real sin cerrar la conexión SSH
+- 🤖 **Detección Inteligente de Hosts**: Configuración automática para hosts conocidos
+- 🔐 **Detección Automática de Sudo**: Manejo inteligente de contraseñas para comandos sudo
+- 💾 **Gestión de Procesos**: Guarda y reutiliza configuraciones SSH
+- 📊 **Logs Detallados**: Registro completo de todas las ejecuciones
+- 🎨 **Interfaz Intuitiva**: Menús interactivos con navegación visual
+- ⚡ **Ejecución Rápida**: Acceso directo por ID de host y posición
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
@@ -55,21 +85,111 @@ ssh-cli help
 # Mostrar ayuda
 ssh-cli help
 
-# Crear nuevo proceso SSH
+# Crear nuevo proceso SSH (modo interactivo)
 ssh-cli start
 
-# Listar procesos guardados
+# Listar procesos guardados por host
 ssh-cli list
 
-# Ejecutar proceso guardado
-ssh-cli start -p 1
+# Ejecutar proceso específico
+ssh-cli start -h 1 -p 2  # Host ID 1, posición 2
 
 # Eliminar proceso
 ssh-cli delete -p 2
 ```
 
+## 🔧 Modo Debug Avanzado
+
+Cuando un comando falla durante la ejecución, el CLI ofrece **modo debug interactivo** con conexión directa:
+
+```
+⚠️  Error detectado en el comando: sudo systemctl restart nginx
+🔧 ¿Cómo deseas proceder?
+  > 🔧 Entrar en modo debug
+    ⏭️  Saltar este comando y continuar
+    🚪 Finalizar proceso
+```
+
+### Experiencia de Conexión Directa
+
+El modo debug te coloca **directamente en el log completo** con una línea de comandos activa que incluye:
+
+#### ⌨️ Navegación Sencilla
+- **↑ / ↓**: Navega por el historial de comandos (hasta 50 comandos)
+- **Ctrl+Q / Ctrl+X**: Salir del modo debug
+- **Ctrl+L**: Mostrar logs completos
+- **Ctrl+H**: Ayuda contextual
+
+#### 🖥️ Interfaz Profesional
+- **Terminal limpio**: Sin duplicación visual
+- **Formato estructurado**: Salida organizada con marcos ASCII
+- **Historial de comandos**: Navegación rápida por comandos anteriores
+
+```
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                        � LOG COMPLETO DE EJECUCIÓN                        ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║ 🏠 Host: Servidor Web                                                        ║
+║ 🌐 Servidor: web-server.empresa.com:22                                       ║
+║ 👤 Usuario: deploy                                                           ║
+║ 📊 Progreso: 3/5 comandos                                                    ║
+║ ⚠️  Error en: sudo systemctl restart nginx                                   ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+📋 HISTORIAL DE COMANDOS:
+════════════════════════════════════════════════════════════════════════════════
+✅ COMANDO 1: cd /var/www/app
+────────────────────────────────────────────────────────
+  /var/www/app
+  └─ Código de salida: 0
+
+✅ COMANDO 2: git pull origin main
+────────────────────────────────────────────────────────
+  Already up to date.
+  └─ Código de salida: 0
+
+❌ COMANDO 3: sudo systemctl restart nginx
+────────────────────────────────────────────────────────
+  Job for nginx.service failed because...
+  └─ Código de salida: 1
+
+════════════════════════════════════════════════════════════════════════════════
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                            � MODO DEBUG ACTIVO                            ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║ 💡 Atajos: Ctrl+Q=Salir | Ctrl+X=Finalizar | Ctrl+L=Log | Ctrl+H=Ayuda   ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+🔧 debug@Servidor Web:~$ 
+```
+
+### Atajos de Teclado Optimizados
+
+- **Ctrl+Q**: 🔄 Salir del debug (volver al proceso)
+- **Ctrl+X**: 🚪 Finalizar conexión completamente  
+- **Ctrl+L**: � Actualizar y mostrar log completo
+- **Ctrl+H**: 🆘 Mostrar ayuda con comandos útiles
+- **Ctrl+C**: 📋 Mostrar menú de opciones avanzadas
+
+### Flujo de Diagnóstico Rápido
+
+```bash
+# Ejemplo de sesión debug real:
+🔧 debug@Servidor Web:~$ nginx -t
+nginx: [emerg] bind() to 0.0.0.0:80 failed (98: Address already in use)
+
+🔧 debug@Servidor Web:~$ sudo lsof -i :80
+apache2   1234 www-data    4u  IPv6  TCP *:http (LISTEN)
+
+🔧 debug@Servidor Web:~$ sudo systemctl stop apache2
+🔧 debug@Servidor Web:~$ sudo systemctl restart nginx
+🔧 debug@Servidor Web:~$ # Ctrl+Q para volver al proceso
+```
+
 ## ✨ Características Principales
 
+- 🔧 **Modo Debug Interactivo**: Solución de problemas en tiempo real
+- 🤖 **Detección Inteligente de Hosts**: Pre-llena configuraciones existentes
 - 🔐 **Detección automática de sudo**: Envía contraseñas automáticamente
 - 💾 **Procesos reutilizables**: Guarda configuraciones para uso futuro
 - 📁 **Contexto persistente**: Mantiene directorio de trabajo entre comandos

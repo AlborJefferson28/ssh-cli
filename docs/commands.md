@@ -1,5 +1,116 @@
 # 📚 Comandos del SSH CLI
 
+## 🔧 Modo Debug Simplificado
+
+### Activación Automática del Debug
+El modo debug se activa automáticamente cuando:
+- Un comando retorna código de salida != 0
+- Hay errores de ejecución
+- Fallan comandos críticos
+
+### Experiencia de Conexión Directa
+Al activarse, el modo debug muestra **inmediatamente**:
+- 📋 **Log completo** de todos los comandos ejecutados
+- 🔧 **Línea de comandos activa** para diagnóstico en tiempo real
+- ⌨️  **Atajos de teclado** para navegación rápida
+- ↕️  **Historial de comandos** con navegación por flechas
+
+### Atajos de Teclado Principales
+```
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                            ⌨️  ATAJOS DISPONIBLES                           ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║ ↑ / ↓   = 📜 Navegar por historial de comandos (hasta 50)                  ║
+║ Ctrl+Q  = 🔄 Salir del debug (volver al proceso)                           ║
+║ Ctrl+X  = 🚪 Finalizar conexión completamente                               ║
+║ Ctrl+L  = 📋 Actualizar y mostrar log completo                             ║
+║ Ctrl+H  = 🆘 Mostrar ayuda con comandos útiles                             ║
+║ Ctrl+C  = 📋 Mostrar menú de opciones avanzadas                           ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Comandos Debug Útiles por Categoría
+
+#### 🔍 Diagnóstico de Sistema
+```bash
+ps aux | grep [proceso]              # Ver procesos específicos
+systemctl status [servicio]         # Estado de servicios
+systemctl list-units --failed       # Servicios fallidos
+journalctl -u [servicio] -n 20      # Logs recientes de servicio
+df -h                               # Espacio en disco
+free -h                             # Memoria disponible
+uptime                              # Carga del sistema
+```
+
+#### 🌐 Diagnóstico de Red
+```bash
+netstat -tlnp                       # Puertos abiertos
+ss -tlnp                            # Alternativa moderna a netstat
+curl -I http://localhost            # Probar servicios web
+ping -c 3 [host]                    # Conectividad
+nslookup [domain]                   # Resolución DNS
+```
+
+#### 📁 Diagnóstico de Archivos
+```bash
+ls -la                              # Permisos de archivos
+find . -name "[archivo]"            # Buscar archivos
+tail -f /var/log/[archivo]          # Seguir logs en tiempo real
+nginx -t                            # Probar configuración nginx
+apache2ctl configtest              # Probar configuración Apache
+```
+
+#### 🔧 Diagnóstico de Servicios Web
+```bash
+# Para Nginx
+nginx -t                            # Verificar configuración
+nginx -s reload                     # Recargar configuración
+systemctl status nginx             # Estado del servicio
+
+# Para Apache
+apache2ctl configtest              # Verificar configuración
+systemctl status apache2           # Estado del servicio
+
+# Para bases de datos
+systemctl status mysql             # MySQL/MariaDB
+systemctl status postgresql        # PostgreSQL
+```
+
+### Flujo de Trabajo Optimizado
+
+1. **Error detectado** → Modo debug se activa automáticamente
+2. **Log completo visible** → Revisar historial y salida de comandos
+3. **Diagnóstico rápido** → Ejecutar comandos con atajos de teclado
+4. **Resolución** → Ctrl+Q para volver al proceso o Ctrl+X para finalizar
+
+### Ejemplo de Sesión Debug
+```
+🔧 debug@web-server:~$ systemctl status nginx
+● nginx.service - A high performance web server
+   Loaded: loaded (/lib/systemd/system/nginx.service; enabled; vendor preset: enabled)
+   Active: failed (Result: exit-code) since Mon 2025-10-06 14:30:15 UTC
+
+🔧 debug@web-server:~$ journalctl -u nginx -n 5
+Oct 06 14:30:15 web-server nginx[1234]: nginx: [emerg] bind() to 0.0.0.0:80 failed
+
+🔧 debug@web-server:~$ sudo lsof -i :80
+apache2   5678 www-data    4u  IPv6      0t0  TCP *:http (LISTEN)
+
+🔧 debug@web-server:~$ sudo systemctl stop apache2
+🔧 debug@web-server:~$ sudo systemctl start nginx
+🔧 debug@web-server:~$ # Ctrl+Q (problema solucionado, volver al proceso)
+```
+
+### Opciones Post-Debug
+Después de salir del modo debug:
+```
+🔄 ¿Cómo deseas continuar?
+  🔄 Reiniciar proceso desde el inicio     # Vuelve a ejecutar todo
+  ▶️  Continuar desde el comando que falló  # Reintenta comando
+  ⏭️  Saltar comando fallido y continuar   # Omite comando y sigue
+  🚪 Finalizar proceso completamente      # Termina proceso
+```
+
 ## 🖱️ Modo Interactivo (Recomendado)
 
 ### Ejecutar Modo Interactivo
@@ -11,8 +122,8 @@ node index.mjs
 
 #### **🚀 Menú Principal**
 - **📋 Navegar procesos SSH por host**: Explora procesos organizados por hosts
-- **🚀 Crear nuevo proceso SSH**: Wizard completo de creación
-- **▶️ Ejecutar proceso (selección rápida)**: Ejecución directa
+- **🚀 Crear nuevo proceso SSH**: Wizard completo de creación con debug integrado
+- **▶️ Ejecutar proceso (selección rápida)**: Ejecución directa con soporte debug
 - **🗑️ Eliminar proceso**: Eliminación segura con confirmación
 - **📊 Ver estadísticas**: Información detallada de todos los procesos
 - **🆘 Ver ayuda**: Ayuda contextual completa
@@ -282,6 +393,7 @@ Sugerencias comunes: ls, cd, pwd, ps aux, df -h, free -h, systemctl status
 - **Banners Contextuales**: Headers específicos para cada operación
 - **Navegación Intuitiva**: Opciones claras para volver atrás
 - **Confirmaciones Visuales**: Mensajes de éxito/error profesionales
+- **📜 Historial de comandos**: Navegación rápida con flechas arriba/abajo
 
 ## ⚠️ Validaciones y Mensajes de Error
 
