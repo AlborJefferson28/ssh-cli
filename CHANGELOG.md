@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-10-06
+
+### Added
+- ✨ Enhanced debug mode with interactive features and command history
+- 📊 Host grouping and improved interactive menu for SSH process management
+- 🧪 Comprehensive unit tests for password detection, process management, and CLI validation
+- 📈 Improved test coverage with integration tests for end-to-end functionality
+- 🔧 Enhanced dependency management and validation improvements
+
+### Improved
+- 📚 Simplified documentation with cleaner README header section
+- 🎨 Better visual presentation with removal of unnecessary artifacts
+- 🔍 Enhanced password detection patterns and confidence scoring
+- ⚡ Improved SSH connection handling and error management
+- 🛠️ Better interactive command processing and menu navigation
+
+### Technical
+- **Testing**: Added comprehensive test suite with mocha, chai, and sinon
+- **Coverage**: Implemented c8 for code coverage reporting
+- **Validation**: Enhanced input validation and error handling
+- **Dependencies**: Updated and optimized dependency versions
+- **Architecture**: Improved modular structure for better maintainability
+
 ## [1.0.0] - 2025-09-28
 
 ### Added

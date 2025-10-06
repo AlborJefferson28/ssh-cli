@@ -1,6 +1,6 @@
 # SSH CLI - Remote Command Executor
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
 ![Node.js](https://img.shields.io/badge/node.js-%3E%3D16.0.0-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
@@ -14,7 +14,7 @@ Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con **m
 ║             |___  |___  |  _  |   | |___ | |___| |           ║
 ║             |_____|_____|_| |_|   |_____||_____|_|           ║
 ║                                                              ║
-║             🚀 SSH Remote Command Executor v1.0.0            ║
+║             🚀 SSH Remote Command Executor v1.1.0            ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
@@ -53,7 +53,24 @@ Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con **m
 - **Monitoreo**: Verificación de estado y métricas de servidores
 - **Gestión de Equipos**: Interface amigable para usuarios no técnicos
 
-## 🆕 Nuevas Características v1.0.0
+## 🆕 Nuevas Características v1.1.0
+
+### 🧪 Testing y Calidad
+- **Suite de Tests Completa**: Tests unitarios e integración con mocha, chai y sinon
+- **Cobertura de Código**: Implementación de c8 para reportes de cobertura
+- **Validaciones Mejoradas**: Tests específicos para todas las validaciones de entrada
+
+### 🔧 Mejoras en Debug y Desarrollo
+- **Modo Debug Avanzado**: Funciones interactivas y historial de comandos
+- **Gestión de Procesos SSH**: Agrupación por hosts y menús interactivos mejorados
+- **Detección de Contraseñas**: Patrones mejorados y scoring de confianza
+
+### 📚 Documentación y UX
+- **README Simplificado**: Header limpio sin artefactos visuales innecesarios
+- **Mejor Organización**: Estructura de documentación más clara
+- **Dependencias Actualizadas**: Versiones optimizadas de todas las dependencias
+
+## 🆕 Características Heredadas v1.0.0
 
 ### Modo Interactivo Completo
 - **Menú Principal**: Navegación visual con opciones claras

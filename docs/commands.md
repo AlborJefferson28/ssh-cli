@@ -360,7 +360,7 @@ node index.mjs delete -p 2
 4. Actualiza archivo de configuración
 5. Muestra confirmación final
 
-## 🆕 Nuevas Funcionalidades v1.0.0
+## 🆕 Nuevas Funcionalidades v1.1.0
 
 ### **📊 Estadísticas Interactivas**
 Accesible desde el modo interactivo:
