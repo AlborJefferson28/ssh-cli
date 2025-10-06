@@ -1430,7 +1430,7 @@ Si después de seguir esta guía aún tienes problemas:
 ## Información del Sistema
 - Node.js: v18.17.0
 - OS: Ubuntu 22.04
-- SSH CLI: v1.0.0
+- SSH CLI: v1.1.0
 
 ## Logs
 ```
