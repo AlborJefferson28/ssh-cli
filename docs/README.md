@@ -4,7 +4,7 @@
 ![Node.js](https://img.shields.io/badge/node.js-%3E%3D16.0.0-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con detección automática de contraseñas sudo.
+Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con **modo interactivo completo** y detección automática de contraseñas sudo.
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
@@ -21,12 +21,18 @@ Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con det
 
 ## 🚀 Características
 
-- **Gestión de procesos SSH**: Crea, guarda, lista y elimina configuraciones SSH
-- **Detección automática de contraseñas**: Manejo inteligente de prompts sudo con +90 patrones
-- **Persistencia de contexto**: Mantiene el directorio de trabajo entre comandos
-- **Logging detallado**: Registro completo de todas las ejecuciones
-- **Interfaz intuitiva**: Diseño profesional con emojis y formato limpio
-- **Optimizado para Linux**: Especialmente probado en Ubuntu
+- **🌐 Flujo de Configuración Inteligente**: Detección automática de hosts existentes con valores por defecto contextuales
+- **🖱️ Modo Interactivo Completo**: Navegación intuitiva con menús visuales usando inquirer.js
+- **🏠 Agrupación por Hosts**: Organización automática de procesos por nombre de host
+- **🧹 Interfaz Limpia**: Pantallas limpias que solo muestran información relevante
+- **🔍 Navegación Jerárquica**: Hosts → Procesos → Detalles → Ejecución
+- **📊 Estadísticas Visuales**: Información detallada con formato profesional
+- **🔐 Detección Automática de Contraseñas**: Manejo inteligente de prompts sudo con +90 patrones
+- **📁 Persistencia de Contexto**: Mantiene el directorio de trabajo entre comandos
+- **📄 Logging Detallado**: Registro completo de todas las ejecuciones
+- **✅ Validación Avanzada**: Validación de inputs con mensajes descriptivos
+- **💡 Sugerencias Inteligentes**: Autocompletado y sugerencias de comandos comunes
+- **🎨 Interfaz Mejorada**: Diseño profesional con emojis y banners contextuales
 
 ## 📋 Tabla de Contenidos
 
@@ -42,26 +48,89 @@ Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con det
 ## 🎯 Casos de Uso
 
 - **DevOps**: Automatización de despliegues y mantenimiento de servidores
-- **Administración de sistemas**: Gestión remota de múltiples servidores
+- **Administración de sistemas**: Gestión remota de múltiples servidores con navegación intuitiva
 - **Desarrollo**: Ejecución de comandos en entornos de desarrollo remotos
 - **Monitoreo**: Verificación de estado y métricas de servidores
+- **Gestión de Equipos**: Interface amigable para usuarios no técnicos
+
+## 🆕 Nuevas Características v1.0.0
+
+### Modo Interactivo Completo
+- **Menú Principal**: Navegación visual con opciones claras
+- **Navegación por Hosts**: Organización automática por nombre de host
+- **Selección Visual**: Interfaces intuitivas para seleccionar hosts y procesos
+- **Pantallas Limpias**: Solo muestra información relevante para la acción actual
+
+### Mejoras en la Experiencia de Usuario
+- **Banners Contextuales**: Headers específicos para cada tipo de operación
+- **Confirmaciones Visuales**: Pantallas dedicadas para éxito/error/cancelación
+- **Progreso Visual**: Indicadores de progreso durante la configuración
+- **Sugerencias en Tiempo Real**: Ayuda contextual mientras se escriben comandos
+
+### Flujo de Configuración Inteligente
+- **🌐 Host como Primer Input**: El host remoto es lo primero que se solicita
+- **🔍 Detección Automática**: Verifica inmediatamente si el host ya está registrado
+- **🏷️ Nombres Inteligentes**: Solo pide el nombre del host si es nuevo
+- **📋 Valores Contextuales**: Pre-completa puerto y usuario para hosts existentes
+- **📊 Información en Tiempo Real**: Muestra procesos existentes del host durante configuración
+- **🔄 Reutilización Eficiente**: Permite agregar nuevos procesos a hosts existentes sin re-configurar
+
+### Sistema de Hosts Mejorado
+- **Agrupación Automática**: Los procesos se agrupan por nombre de host
+- **Navegación Jerárquica**: Hosts → Procesos → Detalles
+- **Selección por Host ID**: Nuevo método de selección más claro
+- **Estadísticas por Host**: Información detallada de cada host
 
 ## 📦 Estructura del Proyecto
 
 ```
 ssh-cli/
-├── index.mjs           # Archivo principal del CLI
-├── package.json        # Dependencias y configuración
-├── docs/              # Documentación
+├── index.mjs           # Archivo principal del CLI con modo interactivo
+├── package.json        # Dependencias (ssh2, inquirer)
+├── docs/              # Documentación actualizada
 │   ├── README.md
 │   ├── commands.md
 │   ├── examples.md
 │   └── ...
-├── process/           # Procesos SSH guardados
+├── process/           # Procesos SSH guardados por host
 │   └── ssh-processes.json
 └── logs/              # Logs de ejecución
     └── ssh-log-*.txt
 ```
+
+## 🖱️ Modos de Uso
+
+### Modo Interactivo (Recomendado)
+```bash
+node index.mjs
+```
+Accede a la interfaz completa con navegación visual y menús intuitivos.
+
+### Modo CLI Tradicional
+```bash
+node index.mjs help
+node index.mjs list
+node index.mjs start -h 1 -p 2
+```
+Uso directo desde línea de comandos para automatización.
+
+## ⚡ Inicio Rápido
+
+1. **Instalar dependencias**
+```bash
+npm install
+```
+
+2. **Ejecutar en modo interactivo**
+```bash
+node index.mjs
+```
+
+3. **Seguir los menús visuales** para:
+   - Crear nuevo proceso SSH
+   - Navegar procesos por host
+   - Ejecutar procesos guardados
+   - Ver estadísticas
 
 ## 🤝 Contribuir
 
@@ -83,3 +152,4 @@ Si tienes problemas o preguntas:
 
 - 📚 Consulta la [documentación completa](.)
 - 🐛 Reporta bugs en [Issues](../../issues)
+- 💡 Solicita features nuevas en [Issues](../../issues)

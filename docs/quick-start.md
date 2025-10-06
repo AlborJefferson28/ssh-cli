@@ -27,109 +27,293 @@ npm install
 node index.mjs help
 ```
 
-## 🎯 Tu Primera Conexión SSH
+## 🖱️ Modo Interactivo (Recomendado)
 
-### Paso 1: Ejecutar el CLI
+### ⚡ Inicio Inmediato
+```bash
+node index.mjs
+```
+
+Te llevará directamente al **menú principal interactivo** con navegación visual completa.
+
+### 🎯 Tu Primera Experiencia Interactiva
+
+#### **Pantalla 1: Menú Principal**
+```
+╔═════════════════════════════════════════════════════════════╗
+║                                                    
+║              _____ _____ _   _     _____  _     _  
+║             |   __|   __| |_| |   |  ___|| |   | | 
+║             |___  |___  |  _  |   | |___ | |___| | 
+║             |_____|_____|_| |_|   |_____||_____|_| 
+║                                                    
+║             🚀 SSH Remote Command Executor v1.0.0  
+║                                                    
+╚═════════════════════════════════════════════════════════════╝
+
+🚀 ¿Qué deseas hacer?
+> 📋 Navegar procesos SSH por host
+  🚀 Crear nuevo proceso SSH
+  ▶️  Ejecutar proceso (selección rápida)
+  🗑️  Eliminar proceso
+  📊 Ver estadísticas
+  🆘 Ver ayuda
+  🚪 Salir
+```
+
+#### **Opción 1: 🚀 Crear nuevo proceso SSH**
+
+**Pantalla de Creación (Flujo Inteligente):**
+```
+╔═════════════════════════════════════════════════════════════╗
+║                                                    
+║                🚀 CREAR NUEVO PROCESO SSH               
+║                                                    
+╚═════════════════════════════════════════════════════════════╝
+
+? 🌐 Host remoto: prod.miempresa.com
+```
+
+**🔍 Detección Automática:**
+
+**Caso 1: Host Nuevo**
+```
+🆕 Host nuevo detectado: prod.miempresa.com
+? 🏷️  Nombre del Host: Mi Servidor Producción
+? 🔌 Puerto SSH: (22)
+? 👤 Usuario SSH: deploy
+? 🔐 Contraseña: ********
+```
+
+**Caso 2: Host Existente**
+```
+✅ Host encontrado: Mi Servidor Producción (prod.miempresa.com)
+📊 Procesos existentes para este host: 3
+? 🔌 Puerto SSH (actual: 22): (22)
+? 👤 Usuario SSH (actual: deploy): (deploy)
+? 🔐 Contraseña: ********
+```
+
+**Pantalla de Comandos:**
+```
+╔═════════════════════════════════════════════════════════════╗
+║                                                    
+║               📋 CONFIGURAR COMANDOS SSH                
+║                                                    
+╚═════════════════════════════════════════════════════════════╝
+
+🏠 Host: Mi Servidor Producción
+🌐 Servidor: prod.miempresa.com:22
+👤 Usuario: deploy
+
+📋 Agrega comandos a ejecutar:
+💡 Sugerencias comunes: ls, cd, pwd, ps aux, df -h, free -h, systemctl status
+──────────────────────────────────────────────────────────────────
+
+? ⚙️  Comando 1: cd /var/www/app
+? ➕ ¿Quieres agregar otro comando? Yes
+? ⚙️  Comando 2: git pull origin main
+? ➕ ¿Quieres agregar otro comando? Yes
+? ⚙️  Comando 3: sudo systemctl restart nginx
+? ➕ ¿Quieres agregar otro comando? No
+```
+
+**Pantalla de Guardado:**
+```
+╔═════════════════════════════════════════════════════════════╗
+║                                                    
+║               💾 GUARDAR PROCESO SSH                    
+║                                                    
+╚═════════════════════════════════════════════════════════════╝
+
+🏠 Host: Mi Servidor Producción
+🌐 Servidor: prod.miempresa.com:22
+👤 Usuario: deploy
+📋 Comandos configurados: 3
+  1. cd /var/www/app
+  2. git pull origin main
+  3. sudo systemctl restart nginx
+
+? ¿Deseas guardar este proceso SSH para uso futuro? Yes
+? Nombre para este proceso SSH: Deploy Aplicación
+```
+
+**Pantalla de Confirmación:**
+```
+╔═════════════════════════════════════════════════════════════╗
+║                                                    
+║               ✅ PROCESO GUARDADO EXITOSAMENTE              
+║                                                    
+╚═════════════════════════════════════════════════════════════╝
+
+📝 Nombre del proceso: Deploy Aplicación
+🏠 Host: Mi Servidor Producción
+🌐 Servidor: prod.miempresa.com:22
+👤 Usuario: deploy
+📋 Comandos guardados: 3
+📊 Total de procesos guardados: 1
+```
+
+#### **Opción 2: 📋 Navegar procesos por host**
+
+**Nivel 1: Lista de Hosts**
+```
+📋 Procesos SSH Guardados (Agrupados por Host)
+═══════════════════════════════════════════════════════
+🏠 HOST ID: 1 | NOMBRE: Mi Servidor Producción
+📊 Total de procesos: 1
+    1. Deploy Aplicación
+
+? ¿Qué host deseas navegar?
+> 🏠 Mi Servidor Producción (1 proceso)
+  🚪 Volver al menú principal
+```
+
+**Nivel 2: Procesos del Host**
+```
+🏠 Host: Mi Servidor Producción
+📊 Procesos disponibles: 1
+──────────────────────────────────────────────────
+
+? 📋 Selecciona un proceso de "Mi Servidor Producción":
+> 📝 Deploy Aplicación (3 comandos)
+  ⬅️  Volver a la lista de hosts
+```
+
+**Nivel 3: Detalles del Proceso**
+```
+📊 Detalles del Proceso
+══════════════════════════════════════════════════
+┌─ Información del proceso ────────────────────────┐
+│ 📝 Nombre: Deploy Aplicación                     │
+│ 🏠 Host: Mi Servidor Producción                  │
+│ 🌐 Servidor: prod.miempresa.com:22               │
+│ 👤 Usuario: deploy                               │
+│ 📅 Creado: 05/10/25 14:30                       │
+│ ⚙️  Comandos: 3 comando(s)                       │
+└───────────────────────────────────────────────────┘
+
+📋 Lista de comandos:
+   1. cd /var/www/app
+   2. git pull origin main
+   3. sudo systemctl restart nginx
+
+? ¿Qué deseas hacer?
+> 🚀 Ejecutar este proceso
+  ⬅️  Volver a la lista de procesos
+```
+
+## 🎯 Modo CLI Tradicional
+
+### Tu Primera Conexión SSH (Método Tradicional)
+
+#### Paso 1: Ejecutar el CLI
 ```bash
 node index.mjs start
 ```
 
-### Paso 2: Configurar la conexión
-El CLI te pedirá la siguiente información:
+#### Paso 2: Configurar la conexión
+El CLI te pedirá la siguiente información con **detección inteligente**:
 
 ```
-? Host remoto: tu-servidor.com
-? Puerto SSH: 22
-? Usuario SSH: tu-usuario
-? Contraseña: ********
+? � Host remoto: tu-servidor.com
+
+� Host nuevo detectado: tu-servidor.com
+? 🏷️  Nombre del Host: Mi Primer Servidor
+? 🔌 Puerto SSH: 22
+? 👤 Usuario SSH: tu-usuario
+? 🔐 Contraseña: ********
 ```
 
-### Paso 3: Agregar comandos
+#### Paso 3: Agregar comandos
 ```
-? Comando a ejecutar: ls -la
-? ¿Quieres agregar otro comando? Yes
-? Comando a ejecutar: whoami
-? ¿Quieres agregar otro comando? No
+? ⚙️  Comando 1: ls -la
+? ➕ ¿Quieres agregar otro comando? Yes
+? ⚙️  Comando 2: whoami
+? ➕ ¿Quieres agregar otro comando? No
 ```
 
-### Paso 4: Guardar proceso (opcional)
+#### Paso 4: Guardar proceso (opcional)
 ```
 ? ¿Deseas guardar este proceso SSH para uso futuro? Yes
 ? Nombre para este proceso SSH: Mi Primer Proceso
 ```
 
-### Paso 5: Ejecutar
+#### Paso 5: Ejecutar
 ```
-? ¿Ejecutar ahora? Yes
-```
-
-## 📋 Ejemplo Completo
-
-### Escenario: Deploy de una aplicación web
-
-1. **Crear el proceso**
-```bash
-node index.mjs start
+? 🚀 ¿Ejecutar ahora? Yes
 ```
 
-2. **Configuración:**
-```
-Host remoto: servidor-produccion.empresa.com
-Puerto SSH: 22
-Usuario SSH: deploy
-Contraseña: ********
-```
+## 📋 Ejemplo Completo: Deploy de Aplicación Web
 
-3. **Comandos de deploy:**
-```
-Comando 1: cd /var/www/mi-app
-Comando 2: git pull origin main
-Comando 3: npm install --production
-Comando 4: sudo systemctl restart nginx
-Comando 5: sudo systemctl restart mi-app
-```
+### Escenario usando Modo Interactivo
 
-4. **Guardar como "Deploy Producción"**
+1. **Ejecutar** `node index.mjs`
+2. **Seleccionar** "🚀 Crear nuevo proceso SSH"
+3. **Configurar conexión:**
+   ```
+   Host: Servidor Producción
+   Host remoto: servidor-produccion.empresa.com
+   Puerto SSH: 22
+   Usuario SSH: deploy
+   Contraseña: ********
+   ```
 
-5. **Ejecutar inmediatamente**
+4. **Agregar comandos de deploy:**
+   ```
+   Comando 1: cd /var/www/mi-app
+   Comando 2: git pull origin main
+   Comando 3: npm install --production
+   Comando 4: npm run build
+   Comando 5: sudo systemctl restart nginx
+   Comando 6: sudo systemctl restart mi-app
+   ```
+
+5. **Guardar como "Deploy Producción"**
+
+6. **Ejecutar inmediatamente**
 
 ### Reutilizar el proceso guardado
 
+#### Método Interactivo:
 ```bash
-# Listar procesos guardados
+node index.mjs
+# → Navegar procesos SSH por host
+# → Seleccionar "Servidor Producción"  
+# → Seleccionar "Deploy Producción"
+# → Ejecutar proceso
+```
+
+#### Método CLI:
+```bash
+# Listar procesos agrupados por host
 node index.mjs list
 
-# Ejecutar el proceso ID 1
-node index.mjs start -p 1
+# Ejecutar proceso Host ID 1, posición 1
+node index.mjs start -h 1 -p 1
 ```
 
 ## 🔧 Comandos Básicos de Prueba
 
-### Verificar conectividad
-```bash
-node index.mjs start
-# Comando: ping -c 3 google.com
-```
+### Verificar conectividad (Modo Interactivo)
+1. `node index.mjs`
+2. "🚀 Crear nuevo proceso SSH"
+3. Configurar servidor
+4. Comando: `ping -c 3 google.com`
 
 ### Información del sistema
-```bash
-node index.mjs start
-# Comandos:
-# 1. uname -a
-# 2. df -h
-# 3. free -m
-# 4. whoami
-```
+**Comandos sugeridos:**
+- `uname -a` (información del sistema)
+- `df -h` (espacio en disco)
+- `free -m` (memoria)
+- `whoami` (usuario actual)
 
 ### Gestión de archivos
-```bash
-node index.mjs start
-# Comandos:
-# 1. pwd
-# 2. ls -la
-# 3. cd /tmp
-# 4. ls -la
-```
+**Comandos sugeridos:**
+- `pwd` (directorio actual)
+- `ls -la` (listar archivos)
+- `cd /tmp` (cambiar directorio)
+- `ls -la` (verificar cambio)
 
 ## 📊 Verificar Resultados
 
@@ -139,16 +323,18 @@ Los logs se guardan automáticamente en:
 logs/ssh-log-[timestamp].txt
 ```
 
-### Contenido del log
+### Contenido del log mejorado
 ```
-=== COMANDO: ls -la ===
-DIRECTORIO ACTUAL: ~
-COMANDO EJECUTADO: cd ~ && ls -la
-total 32
-drwxr-xr-x 5 usuario usuario 4096 Sep 28 10:30 .
-drwxr-xr-x 3 root    root    4096 Sep 20 09:15 ..
--rw-r--r-- 1 usuario usuario  220 Sep 20 09:15 .bash_logout
-...
+=== COMANDO: git pull origin main ===
+DIRECTORIO ACTUAL: /var/www/app
+COMANDO EJECUTADO: cd /var/www/app && git pull origin main
+Already up to date.
+=== FIN COMANDO (código: 0) ===
+
+=== COMANDO: sudo systemctl restart nginx ===
+DIRECTORIO ACTUAL: /var/www/app
+COMANDO EJECUTADO: cd /var/www/app && sudo systemctl restart nginx
+[AUTO-RESPONSE] Contraseña enviada automáticamente (Detectado prompt - confianza: 95%)
 === FIN COMANDO (código: 0) ===
 ```
 
@@ -164,32 +350,32 @@ drwxr-xr-x 3 root    root    4096 Sep 20 09:15 ..
 ```
 ❌ Error de conexión: All configured authentication methods failed
 ```
-**Solución**: Verifica usuario y contraseña.
+**Solución**: Verifica usuario y contraseña en el modo interactivo.
+
+### Host ID no encontrado
+```
+❌ No se encontró el host con ID "3".
+💡 Hay 2 host(s) disponible(s).
+```
+**Solución**: Usa `node index.mjs list` o el modo interactivo para ver hosts disponibles.
 
 ### Comando sudo no responde
 El CLI detecta automáticamente prompts de sudo y envía la contraseña, pero si falla:
 - Verifica que la contraseña sea correcta
 - Algunos comandos pueden necesitar `NOPASSWD` en sudoers
 
-### Directorio no encontrado
-```bash
-# En lugar de solo:
-cd /ruta/inexistente
-
-# Usa:
-cd /ruta/inexistente || echo "Directorio no existe"
-```
-
 ## ⚡ Consejos de Rendimiento
 
-1. **Comandos cortos**: Divide comandos largos en pasos más pequeños
-2. **Verifica rutas**: Usa rutas absolutas cuando sea posible
-3. **Timeout**: Los comandos muy largos pueden necesitar ajustes
-4. **Red**: Conexiones lentas pueden afectar la detección de prompts
+1. **🖱️ Usa el modo interactivo** para una experiencia completa y visual
+2. **🧹 Pantallas limpias**: Solo se muestra información relevante
+3. **📊 Navegación jerárquica**: Hosts → Procesos → Detalles
+4. **💡 Sugerencias inteligentes**: Aprovecha las sugerencias de comandos
+5. **🔄 Navegación libre**: Puedes volver atrás en cualquier momento
+6. **📋 Organización por hosts**: Agrupa procesos del mismo servidor
 
 ## 🎯 Próximos Pasos
 
-- Explora [comandos avanzados](commands.md)
-- Revisa [ejemplos completos](examples.md)
+- Explora el **[modo interactivo completo](commands.md#modo-interactivo-recomendado)**
+- Revisa [ejemplos de navegación](examples.md)
 - Configura [opciones avanzadas](configuration.md)
 - Lee sobre [solución de problemas](troubleshooting.md)

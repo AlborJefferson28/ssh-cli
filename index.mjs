@@ -80,7 +80,7 @@ function deleteSshProcess(processId) {
   return true;
 }
 
-// Mostrar lista de procesos SSH
+// Mostrar lista de procesos SSH agrupados por host
 function showSshProcessList() {
   const processes = loadSshProcesses();
   
@@ -89,41 +89,83 @@ function showSshProcessList() {
     return processes;
   }
 
-  console.log("\n📋 Procesos SSH Guardados");
-  console.log("═".repeat(80));
+  // Agrupar procesos por host
+  const groupedByHost = {};
+  processes.forEach((proc, originalIndex) => {
+    const hostName = proc.config.hostName || 'Sin nombre de host';
+    if (!groupedByHost[hostName]) {
+      groupedByHost[hostName] = [];
+    }
+    groupedByHost[hostName].push({
+      ...proc,
+      originalIndex: originalIndex
+    });
+  });
+
+  console.log("\n📋 Procesos SSH Guardados (Agrupados por Host)");
+  console.log("═".repeat(55));
   
-  // Usar formato simple y limpio
-  processes.forEach((proc, index) => {
-    console.log(`\n┌─ ID: ${index + 1} ──────────────────────────────────────────────────────────┐`);
-    console.log(`│ 📝 Nombre: ${proc.name || `Proceso ${index + 1}`}`);
-    console.log(`│ 🌐 Host: ${proc.config.host}:${proc.config.port}`);
-    console.log(`│ 👤 Usuario: ${proc.config.username}`);
+  const hostEntries = Object.entries(groupedByHost);
+  hostEntries.forEach(([hostName, hostProcesses], hostIndex) => {
+    const hostId = hostIndex + 1;
+    console.log(`🏠 HOST ID: ${hostId} | NOMBRE: ${hostName}`);
+    console.log(`📊 Total de procesos: ${hostProcesses.length}`);
     
-    const dateStr = new Date(proc.createdAt).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: '2-digit'
-    }) + ' ' + new Date(proc.createdAt).toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
+    hostProcesses.forEach((proc, processIndex) => {
+      console.log(`\t${processIndex + 1}. ${proc.name || `Proceso ${proc.originalIndex + 1}`}`);
     });
-    console.log(`│ 📅 Creado: ${dateStr}`);
-    console.log(`│ ⚙️  Comandos: ${proc.commands.length} comando(s)`);
-    
-    console.log(`│`);
-    console.log(`│ 📋 Lista de comandos:`);
-    proc.commands.forEach((cmd, i) => {
-      console.log(`│   ${(i + 1).toString().padStart(2)}. ${cmd}`);
-    });
-    console.log(`└──────────────────────────────────────────────────────────────────┘`);
+    console.log(""); // Línea en blanco entre hosts
   });
   
-  console.log(`\n💡 Uso: ssh-cli start -p <ID> para ejecutar un proceso`);
+  console.log(`💡 Uso: ssh-cli start -h <host_id> -p <posición> para ejecutar un proceso`);
   console.log(`📁 Procesos guardados en: ./process/`);
   console.log(`📁 Logs guardados en: ./logs/`);
   
-  return processes;
+  return { processes, groupedByHost, hostEntries };
+}
+
+// Mostrar estadísticas de procesos
+function showProcessStatistics() {
+  const processes = loadSshProcesses();
+  
+  if (processes.length === 0) {
+    console.log("\n📭 No hay procesos SSH guardados.");
+    return;
+  }
+
+  // Agrupar por host
+  const groupedByHost = {};
+  let totalCommands = 0;
+  
+  processes.forEach((proc) => {
+    const hostName = proc.config.hostName || 'Sin nombre de host';
+    if (!groupedByHost[hostName]) {
+      groupedByHost[hostName] = {
+        count: 0,
+        commands: 0,
+        hosts: new Set()
+      };
+    }
+    groupedByHost[hostName].count++;
+    groupedByHost[hostName].commands += proc.commands.length;
+    groupedByHost[hostName].hosts.add(`${proc.config.host}:${proc.config.port}`);
+    totalCommands += proc.commands.length;
+  });
+
+  console.log("\n📊 Estadísticas de Procesos SSH");
+  console.log("═".repeat(60));
+  console.log(`📝 Total de procesos: ${processes.length}`);
+  console.log(`🏠 Hosts únicos: ${Object.keys(groupedByHost).length}`);
+  console.log(`⚙️  Total de comandos: ${totalCommands}`);
+  console.log(`📊 Promedio de comandos por proceso: ${(totalCommands / processes.length).toFixed(1)}`);
+  
+  console.log("\n📋 Desglose por host:");
+  Object.entries(groupedByHost).forEach(([hostName, stats]) => {
+    console.log(`  🏠 ${hostName}`);
+    console.log(`     📝 Procesos: ${stats.count}`);
+    console.log(`     ⚙️  Comandos: ${stats.commands}`);
+    console.log(`     🌐 Servidores: ${Array.from(stats.hosts).join(', ')}`);
+  });
 }
 
 // Función para obtener nombre completo del comando (sin acortar)
@@ -295,6 +337,9 @@ async function runSshProcess(processConfig = null) {
   let processName = null;
 
   if (processConfig) {
+    // Limpiar pantalla al ejecutar proceso guardado
+    console.clear();
+    
     // Usar configuración existente pero pedir contraseña de nuevo
     console.log(`🔄 Ejecutando proceso guardado: ${processConfig.name || "Sin nombre"}`);
     
@@ -311,40 +356,217 @@ async function runSshProcess(processConfig = null) {
     commandList = processConfig.commands;
     processName = processConfig.name;
   } else {
-    // Solicitar nueva configuración
+    // Limpiar pantalla al crear nuevo proceso
+    console.clear();
+    
+    console.log(`
+    ╔═════════════════════════════════════════════════════════════╗
+    ║                                                    
+    ║                🚀 CREAR NUEVO PROCESO SSH               
+    ║                                                    
+    ╚═════════════════════════════════════════════════════════════╝
+    `);
+    
+    // Primero solicitar el host remoto
+    const { host } = await inquirer.prompt([
+      { 
+        type: "input", 
+        name: "host", 
+        message: "� Host remoto:",
+        validate: (input) => {
+          if (!input.trim()) return "El host es obligatorio";
+          // Validación básica de formato de host/IP
+          const hostRegex = /^[a-zA-Z0-9.-]+$/;
+          if (!hostRegex.test(input.trim())) {
+            return "Formato de host inválido. Usa solo letras, números, puntos y guiones.";
+          }
+          return true;
+        }
+      }
+    ]);
+
+    // Verificar si el host ya existe en procesos guardados
+    const existingProcesses = loadSshProcesses();
+    const existingHost = existingProcesses.find(proc => proc.config.host === host.trim());
+    
+    let hostName;
+    if (existingHost) {
+      // Host ya existe, usar el nombre existente
+      hostName = existingHost.config.hostName;
+      console.log(`\n✅ Host encontrado: ${hostName} (${host.trim()})`);
+      console.log(`📊 Procesos existentes para este host: ${existingProcesses.filter(p => p.config.host === host.trim()).length}`);
+    } else {
+      // Host nuevo, solicitar nombre
+      console.log(`\n🆕 Host nuevo detectado: ${host.trim()}`);
+      const hostNameInput = await inquirer.prompt([
+        { 
+          type: "input", 
+          name: "hostName", 
+          message: "�️  Nombre del Host:", 
+          validate: (input) => {
+            if (!input.trim()) return "El nombre del host es obligatorio";
+            if (input.trim().length < 3) return "El nombre debe tener al menos 3 caracteres";
+            return true;
+          },
+          transformer: (input) => input.trim()
+        }
+      ]);
+      hostName = hostNameInput.hostName.trim();
+    }
+
     connectionConfig = await inquirer.prompt([
-      { type: "input", name: "host", message: "Host remoto:" },
-      { type: "input", name: "port", message: "Puerto SSH:", default: "22" },
-      { type: "input", name: "username", message: "Usuario SSH:" },
+      { 
+        type: "input", 
+        name: "port", 
+        message: existingHost ? 
+          `🔌 Puerto SSH (actual: ${existingHost.config.port}):` : 
+          "🔌 Puerto SSH:",
+        default: existingHost ? existingHost.config.port : "22",
+        validate: (input) => {
+          const port = parseInt(input);
+          if (isNaN(port) || port < 1 || port > 65535) {
+            return "Puerto inválido. Debe ser un número entre 1 y 65535.";
+          }
+          return true;
+        }
+      },
+      { 
+        type: "input", 
+        name: "username", 
+        message: existingHost ? 
+          `👤 Usuario SSH (actual: ${existingHost.config.username}):` : 
+          "👤 Usuario SSH:",
+        default: existingHost ? existingHost.config.username : undefined,
+        validate: (input) => input.trim() ? true : "El usuario es obligatorio"
+      },
       {
         type: "password",
         name: "password",
-        message: "Contraseña:",
+        message: "🔐 Contraseña:",
         mask: "*",
+        validate: (input) => input.trim() ? true : "La contraseña es obligatoria"
       },
     ]);
+
+    // Agregar el host y hostName a la configuración
+    connectionConfig.host = host.trim();
+    connectionConfig.hostName = hostName;
 
     commandList = [];
     let addMore = true;
 
+    // Limpiar pantalla para la sección de comandos
+    console.clear();
+    console.log(`
+    ╔═════════════════════════════════════════════════════════════╗
+    ║                                                    
+    ║               📋 CONFIGURAR COMANDOS SSH                
+    ║                                                    
+    ╚═════════════════════════════════════════════════════════════╝
+    `);
+    
+    console.log(`🏠 Host: ${hostName}`);
+    console.log(`🌐 Servidor: ${connectionConfig.host}:${connectionConfig.port}`);
+    console.log(`👤 Usuario: ${connectionConfig.username}`);
+    if (existingHost) {
+      const existingCount = existingProcesses.filter(p => p.config.host === connectionConfig.host).length;
+      console.log(`📊 Procesos existentes: ${existingCount}`);
+    }
+    console.log("\n📋 Agrega comandos a ejecutar:");
+    console.log("💡 Sugerencias comunes: ls, cd, pwd, ps aux, df -h, free -h, systemctl status");
+    console.log("─".repeat(60));
+
     while (addMore) {
       const { cmd } = await inquirer.prompt([
-        { type: "input", name: "cmd", message: "Comando a ejecutar:" },
+        { 
+          type: "input", 
+          name: "cmd", 
+          message: `⚙️  Comando ${commandList.length + 1}:`,
+          validate: (input) => {
+            if (!input.trim()) return "El comando no puede estar vacío";
+            return true;
+          },
+          transformer: (input) => {
+            // Mostrar sugerencias mientras escribe
+            const suggestions = [
+              'ls -la', 'cd ~', 'pwd', 'ps aux', 'df -h', 'free -h', 
+              'systemctl status', 'git status', 'git pull', 'npm install',
+              'sudo systemctl restart', 'tail -f /var/log/', 'htop',
+              'docker ps', 'docker logs', 'sudo apt update'
+            ];
+            
+            const matched = suggestions.find(s => s.startsWith(input.toLowerCase()));
+            if (matched && input.length > 2) {
+              return `${input} (sugerencia: ${matched})`;
+            }
+            return input;
+          }
+        },
       ]);
 
-      commandList.push(cmd);
+      commandList.push(cmd.trim());
 
       const { again } = await inquirer.prompt([
         {
           type: "confirm",
           name: "again",
-          message: "¿Quieres agregar otro comando?",
+          message: "➕ ¿Quieres agregar otro comando?",
           default: false,
         },
       ]);
 
       addMore = again;
+      
+      // Si aún hay más comandos por agregar, actualizar la pantalla
+      if (again) {
+        console.clear();
+        console.log(`
+    ╔═════════════════════════════════════════════════════════════╗
+    ║                                                    
+    ║               📋 CONFIGURAR COMANDOS SSH                
+    ║                                                    
+    ╚═════════════════════════════════════════════════════════════╝
+    `);
+        
+        console.log(`🏠 Host: ${hostName}`);
+        console.log(`🌐 Servidor: ${connectionConfig.host}:${connectionConfig.port}`);
+        console.log(`👤 Usuario: ${connectionConfig.username}`);
+        if (existingHost) {
+          const existingCount = existingProcesses.filter(p => p.config.host === connectionConfig.host).length;
+          console.log(`📊 Procesos existentes: ${existingCount}`);
+        }
+        console.log("\n📋 Comandos agregados hasta ahora:");
+        commandList.forEach((c, i) => {
+          console.log(`  ✅ ${i + 1}. ${c}`);
+        });
+        console.log("\n💡 Sugerencias comunes: ls, cd, pwd, ps aux, df -h, free -h, systemctl status");
+        console.log("─".repeat(60));
+      }
     }
+
+    // Limpiar pantalla para la sección de guardado
+    console.clear();
+    console.log(`
+    ╔═════════════════════════════════════════════════════════════╗
+    ║                                                    
+    ║               💾 GUARDAR PROCESO SSH                    
+    ║                                                    
+    ╚═════════════════════════════════════════════════════════════╝
+    `);
+    
+    console.log(`🏠 Host: ${hostName}`);
+    console.log(`🌐 Servidor: ${connectionConfig.host}:${connectionConfig.port}`);
+    console.log(`👤 Usuario: ${connectionConfig.username}`);
+    console.log(`📋 Comandos configurados: ${commandList.length}`);
+    if (existingHost) {
+      const existingCount = existingProcesses.filter(p => p.config.host === connectionConfig.host).length;
+      console.log(`📊 Procesos existentes en este host: ${existingCount}`);
+    }
+    
+    commandList.forEach((c, i) => {
+      console.log(`  ${i + 1}. ${c}`);
+    });
+    console.log("");
 
     // Preguntar si desea guardar el proceso
     const { saveProcess } = await inquirer.prompt([
@@ -373,24 +595,73 @@ async function runSshProcess(processConfig = null) {
       const newProcess = {
         id: Date.now(),
         name: processName,
-        config: { ...connectionConfig, password: "***" }, // No guardar la contraseña real
+        config: { 
+          ...connectionConfig, 
+          password: "***", // No guardar la contraseña real
+          hostName: connectionConfig.hostName // Asegurar que se guarde el nombre del host
+        }, 
         commands: [...commandList],
         createdAt: new Date().toISOString(),
       };
       
       processes.push(newProcess);
       saveSshProcesses(processes);
-      console.log(`✅ Proceso "${processName}" guardado exitosamente.`);
+      
+      // Calcular estadísticas del host después de agregar el nuevo proceso
+      const hostProcesses = processes.filter(p => p.config.host === connectionConfig.host);
+      
+      // Mostrar confirmación de guardado
+      console.clear();
+      console.log(`
+    ╔═════════════════════════════════════════════════════════════╗
+    ║                                                    
+    ║               ✅ PROCESO GUARDADO EXITOSAMENTE              
+    ║                                                    
+    ╚═════════════════════════════════════════════════════════════╝
+    `);
+      
+      console.log(`📝 Nombre del proceso: ${processName}`);
+      console.log(`🏠 Host: ${connectionConfig.hostName}`);
+      console.log(`🌐 Servidor: ${connectionConfig.host}:${connectionConfig.port}`);
+      console.log(`👤 Usuario: ${connectionConfig.username}`);
+      console.log(`📋 Comandos guardados: ${commandList.length}`);
+      console.log(`📊 Total de procesos en este host: ${hostProcesses.length}`);
+      console.log(`📊 Total de procesos guardados: ${processes.length}`);
     }
   }
+
+  // Limpiar pantalla para mostrar resumen antes de ejecutar
+  console.clear();
+  
+  console.log(`
+    ╔═════════════════════════════════════════════════════════════╗
+    ║                                                    
+    ║               🚀 RESUMEN DE EJECUCIÓN                   
+    ║                                                    
+    ╚═════════════════════════════════════════════════════════════╝
+    `);
 
   console.log("\n📋 Tareas a ejecutar:");
   commandList.forEach((c, i) => {
     console.log(`  ⏳ ${i + 1}. ${c}`); // Mostrar comando completo
   });
 
+  console.log(`\n🔧 Configuración de conexión:`);
+  console.log(`  🌐 Host: ${connectionConfig.host}:${connectionConfig.port}`);
+  console.log(`  👤 Usuario: ${connectionConfig.username}`);
+  console.log(`  🏷️  Nombre: ${connectionConfig.hostName || 'Sin nombre'}`);
+  
+  if (processName) {
+    console.log(`  📝 Proceso: ${processName}`);
+  }
+
   const { executeNow } = await inquirer.prompt([
-    { type: "confirm", name: "executeNow", message: "¿Ejecutar ahora?", default: true },
+    { 
+      type: "confirm", 
+      name: "executeNow", 
+      message: "🚀 ¿Ejecutar ahora?", 
+      default: true 
+    },
   ]);
 
   if (!executeNow) {
@@ -609,67 +880,580 @@ async function runSshProcess(processConfig = null) {
 // Mostrar ayuda del CLI
 function showHelp() {
   console.log(`
-    ╔══════════════════════════════════════════════════════════════╗
-    ║                       📚 SSH CLI - AYUDA                     ║
-    ╠══════════════════════════════════════════════════════════════╣
-    ║                                                              ║
-    ║  📋 COMANDOS DISPONIBLES:                                    ║
-    ║                                                              ║
-    ║  🆘 help                      Mostrar esta ayuda             ║
-    ║  📋 list                      Listar procesos guardados      ║
-    ║  🚀 start                     Crear nuevo proceso SSH        ║
-    ║  ▶️  start -p <id>             Ejecutar proceso guardado     ║
-    ║  🗑️  delete -p <id>            Eliminar proceso guardado     ║
-    ║                                                              ║
-    ╠══════════════════════════════════════════════════════════════╣
-    ║  💡 EJEMPLOS DE USO:                                         ║
-    ║                                                              ║
-    ║  ssh-cli start                                               ║
-    ║  ssh-cli list                                                ║
-    ║  ssh-cli start -p 1                                          ║
-    ║  ssh-cli delete -p 2                                         ║
-    ║                                                              ║
-    ╠══════════════════════════════════════════════════════════════╣
-    ║  🔧 CARACTERÍSTICAS:                                         ║
-    ║                                                              ║
-    ║  • Gestión completa de conexiones SSH                       ║
-    ║  • Guardado de procesos para reutilización                  ║
-    ║  • Detección automática de prompts sudo                     ║
-    ║  • Registro detallado de todas las ejecuciones              ║
-    ║  • Persistencia del contexto de directorio                  ║
-    ║                                                              ║
-    ╚══════════════════════════════════════════════════════════════╝
+    ╔══════════════════════════════════════════════════════════════════════╗
+    ║                       📚 SSH CLI - AYUDA                     
+    ╠══════════════════════════════════════════════════════════════════════╣
+    ║                                                          
+    ║  📋 COMANDOS DISPONIBLES:                                
+    ║                                                          
+    ║  🚀 (sin argumentos)                   Modo interactivo        
+    ║  🆘 help                               Mostrar esta ayuda         
+    ║  📋 list                               Listar procesos por host   
+    ║  🚀 start                              Crear nuevo proceso SSH    
+    ║  ▶️  start -p <id>                     Ejecutar por ID (obsoleto)
+    ║  ▶️  start -h <host_id> -p <posición>  Ejecutar por host ID/posición
+    ║  🗑️  delete -p <id>                    Eliminar proceso guardado 
+    ║                                                          
+    ╠══════════════════════════════════════════════════════════════════════╣
+    ║  💡 EJEMPLOS DE USO:                                     
+    ║                                                           
+    ║  ssh-cli                              (modo interactivo)
+    ║  ssh-cli start                                            
+    ║  ssh-cli list                                             
+    ║  ssh-cli start -h 1 -p 2              (host ID 1, posición 2)
+    ║  ssh-cli start -p 1                   (método obsoleto)            
+    ║  ssh-cli delete -p 2                                      
+    ║                                                           
+    ╠═══════════════════════════════════════════════════════════════════════╣
+    ║  🔧 CARACTERÍSTICAS NUEVAS:                              
+    ║                                                          
+    ║  • 🖱️  Modo interactivo con menús navegables             
+    ║  • ✅ Validación avanzada de inputs                      
+    ║  • 💡 Sugerencias de comandos comunes                    
+    ║  • 📊 Estadísticas detalladas de procesos                
+    ║  • 🎨 Interfaz mejorada con emojis                       
+    ║  • 🔍 Selección visual de hosts y procesos               
+    ║                                                          
+    ╠═══════════════════════════════════════════════════════════════════════╣
+    ║  🔧 CARACTERÍSTICAS TÉCNICAS:                            
+    ║                                                          
+    ║  • Gestión completa de conexiones SSH                    
+    ║  • Agrupación de procesos por nombre de host             
+    ║  • Selección por ID de host y posición                   
+    ║  • Detección automática de prompts sudo                  
+    ║  • Registro detallado de todas las ejecuciones           
+    ║  • Persistencia del contexto de directorio               
+    ║                                                          
+    ╚═══════════════════════════════════════════════════════════════════════╝
   `);
+}
+
+// Menú interactivo principal
+async function showInteractiveMenu() {
+  while (true) {
+    // Limpiar pantalla para modo interactivo
+    console.clear();
+    
+    console.log(`
+    ╔═════════════════════════════════════════════════════════════╗
+    ║                                                    
+    ║              _____ _____ _   _     _____  _     _  
+    ║             |   __|   __| |_| |   |  ___|| |   | | 
+    ║             |___  |___  |  _  |   | |___ | |___| | 
+    ║             |_____|_____|_| |_|   |_____||_____|_| 
+    ║                                                    
+    ║             🚀 SSH Remote Command Executor v1.0.0  
+    ║                                                    
+    ╠══════════════════════════════════════════════════════════════
+    ║                                                        
+    ║  📋 Gestiona conexiones SSH y ejecuta comandos remotos 
+    ║  💾 Guarda procesos para reutilización futura          
+    ║  🔐 Soporte automático para comandos sudo              
+    ║  📊 Registro detallado de ejecuciones                  
+    ║                                                        
+    ╚═════════════════════════════════════════════════════════════╝
+    `);
+
+    const { action } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "action",
+        message: "🚀 ¿Qué deseas hacer?",
+        choices: [
+          {
+            name: "📋 Navegar procesos SSH por host",
+            value: "list"
+          },
+          {
+            name: "🚀 Crear nuevo proceso SSH",
+            value: "create"
+          },
+          {
+            name: "▶️  Ejecutar proceso (selección rápida)",
+            value: "execute"
+          },
+          {
+            name: "🗑️  Eliminar proceso",
+            value: "delete"
+          },
+          {
+            name: "📊 Ver estadísticas",
+            value: "stats"
+          },
+          {
+            name: "🆘 Ver ayuda",
+            value: "help"
+          },
+          {
+            name: "🚪 Salir",
+            value: "exit"
+          }
+        ],
+        pageSize: 10
+      }
+    ]);
+
+    switch (action) {
+      case "list":
+        await showInteractiveHostNavigation();
+        break;
+      
+      case "create":
+        await runSshProcess();
+        await waitForKeyPress();
+        break;
+      
+      case "execute":
+        await executeInteractiveProcess();
+        await waitForKeyPress();
+        break;
+      
+      case "delete":
+        await deleteInteractiveProcess();
+        await waitForKeyPress();
+        break;
+      
+      case "stats":
+        console.clear();
+        showProcessStatistics();
+        await waitForKeyPress();
+        break;
+      
+      case "help":
+        console.clear();
+        showHelp();
+        await waitForKeyPress();
+        break;
+      
+      case "exit":
+        console.log("\n👋 ¡Hasta luego!");
+        return;
+    }
+  }
+}
+
+// Función para pausar y esperar input del usuario
+async function waitForKeyPress() {
+  console.log("\n" + "─".repeat(50));
+  await inquirer.prompt([
+    {
+      type: "input",
+      name: "continue",
+      message: "Presiona Enter para continuar...",
+    }
+  ]);
+}
+
+// Navegación interactiva de hosts y procesos
+async function showInteractiveHostNavigation() {
+  const processes = loadSshProcesses();
+  
+  if (processes.length === 0) {
+    console.clear();
+    console.log("\n📭 No hay procesos SSH guardados.");
+    console.log("💡 Crea uno nuevo primero usando 'Crear nuevo proceso SSH'.");
+    return;
+  }
+
+  // Agrupar procesos por host
+  const groupedByHost = {};
+  processes.forEach((proc, originalIndex) => {
+    const hostName = proc.config.hostName || 'Sin nombre de host';
+    if (!groupedByHost[hostName]) {
+      groupedByHost[hostName] = [];
+    }
+    groupedByHost[hostName].push({
+      ...proc,
+      originalIndex: originalIndex
+    });
+  });
+
+  const hostEntries = Object.entries(groupedByHost);
+  
+  while (true) {
+    // Limpiar pantalla antes de mostrar listado de hosts
+    console.clear();
+    
+    // Mostrar listado simplificado de hosts
+    console.log("\n📋 Procesos SSH Guardados (Agrupados por Host)");
+    console.log("═".repeat(55));
+    
+    hostEntries.forEach(([hostName, hostProcesses], hostIndex) => {
+      const hostId = hostIndex + 1;
+      console.log(`🏠 HOST ID: ${hostId} | NOMBRE: ${hostName}`);
+      console.log(`📊 Total de procesos: ${hostProcesses.length}`);
+      
+      hostProcesses.forEach((proc, processIndex) => {
+        console.log(`\t${processIndex + 1}. ${proc.name || `Proceso ${proc.originalIndex + 1}`}`);
+      });
+      console.log(""); // Línea en blanco entre hosts
+    });
+
+    // Crear opciones para el selector de hosts
+    const hostChoices = hostEntries.map(([hostName, hostProcesses], index) => ({
+      name: `🏠 ${hostName} (${hostProcesses.length} proceso${hostProcesses.length !== 1 ? 's' : ''})`,
+      value: index
+    }));
+
+    // Agregar opción para salir
+    hostChoices.push({
+      name: "🚪 Volver al menú principal",
+      value: -1
+    });
+
+    const { selectedHostIndex } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "selectedHostIndex",
+        message: "¿Qué host deseas navegar?",
+        choices: hostChoices,
+        pageSize: 10
+      }
+    ]);
+
+    if (selectedHostIndex === -1) {
+      // Salir al menú principal
+      break;
+    }
+
+    // Navegar procesos del host seleccionado
+    const [hostName, hostProcesses] = hostEntries[selectedHostIndex];
+    await navigateHostProcesses(hostName, hostProcesses);
+  }
+}
+
+// Navegar procesos de un host específico
+async function navigateHostProcesses(hostName, hostProcesses) {
+  while (true) {
+    // Limpiar pantalla antes de mostrar procesos del host
+    console.clear();
+    
+    console.log(`\n🏠 Host: ${hostName}`);
+    console.log(`📊 Procesos disponibles: ${hostProcesses.length}`);
+    console.log("─".repeat(50));
+
+    // Crear opciones para el selector de procesos
+    const processChoices = hostProcesses.map((proc, index) => ({
+      name: `📝 ${proc.name || `Proceso ${proc.originalIndex + 1}`} (${proc.commands.length} comando${proc.commands.length !== 1 ? 's' : ''})`,
+      value: index,
+      short: proc.name || `Proceso ${proc.originalIndex + 1}`
+    }));
+
+    // Agregar opción para volver a la lista de hosts
+    processChoices.push({
+      name: "⬅️  Volver a la lista de hosts",
+      value: -1
+    });
+
+    const { selectedProcessIndex } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "selectedProcessIndex",
+        message: `📋 Selecciona un proceso de "${hostName}":`,
+        choices: processChoices,
+        pageSize: 10
+      }
+    ]);
+
+    if (selectedProcessIndex === -1) {
+      // Volver a la lista de hosts
+      break;
+    }
+
+    // Mostrar detalles del proceso seleccionado
+    const selectedProcess = hostProcesses[selectedProcessIndex];
+    await showProcessDetails(selectedProcess, hostName);
+  }
+}
+
+// Mostrar detalles de un proceso específico
+async function showProcessDetails(process, hostName) {
+  // Limpiar pantalla antes de mostrar detalles del proceso
+  console.clear();
+  
+  const dateStr = new Date(process.createdAt).toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit'
+  }) + ' ' + new Date(process.createdAt).toLocaleTimeString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+
+  console.log(`\n📊 Detalles del Proceso`);
+  console.log("═".repeat(50));
+  console.log(`┌─ Información del proceso ────────────────────────────────────────┐`);
+  console.log(`│ 📝 Nombre: ${process.name || 'Sin nombre'}`);
+  console.log(`│ 🏠 Host: ${hostName}`);
+  console.log(`│ 🌐 Servidor: ${process.config.host}:${process.config.port}`);
+  console.log(`│ 👤 Usuario: ${process.config.username}`);
+  console.log(`│ 📅 Creado: ${dateStr}`);
+  console.log(`│ ⚙️  Comandos: ${process.commands.length} comando(s)`);
+  console.log(`└───────────────────────────────────────────────────────────────────┘`);
+  
+  console.log(`\n📋 Lista de comandos:`);
+  process.commands.forEach((cmd, i) => {
+    console.log(`  ${(i + 1).toString().padStart(2)}. ${cmd}`);
+  });
+
+  const { action } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "action",
+      message: "¿Qué deseas hacer?",
+      choices: [
+        {
+          name: "🚀 Ejecutar este proceso",
+          value: "execute"
+        },
+        {
+          name: "⬅️  Volver a la lista de procesos",
+          value: "back"
+        }
+      ]
+    }
+  ]);
+
+  if (action === "execute") {
+    await runSshProcess(process);
+    await waitForKeyPress();
+  }
+  // Si action === "back", simplemente retorna y vuelve a la lista de procesos
+}
+
+// Ejecutar proceso de forma interactiva
+async function executeInteractiveProcess() {
+  const processes = loadSshProcesses();
+  
+  // Limpiar pantalla para el modo de ejecución interactiva
+  console.clear();
+  
+  if (processes.length === 0) {
+    console.log("\n📭 No hay procesos SSH guardados.");
+    console.log("💡 Crea uno nuevo primero usando 'Crear nuevo proceso SSH'.");
+    return;
+  }
+
+  // Agrupar procesos por host
+  const groupedByHost = {};
+  processes.forEach((proc, originalIndex) => {
+    const hostName = proc.config.hostName || 'Sin nombre de host';
+    if (!groupedByHost[hostName]) {
+      groupedByHost[hostName] = [];
+    }
+    groupedByHost[hostName].push({
+      ...proc,
+      originalIndex: originalIndex
+    });
+  });
+
+  const hostEntries = Object.entries(groupedByHost);
+  
+  // Crear opciones para el selector de hosts
+  const hostChoices = hostEntries.map(([hostName, hostProcesses], index) => ({
+    name: `🏠 ${hostName} (${hostProcesses.length} proceso${hostProcesses.length !== 1 ? 's' : ''})`,
+    value: index
+  }));
+
+  const { selectedHostIndex } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "selectedHostIndex",
+      message: "🏠 Selecciona un host:",
+      choices: hostChoices,
+      pageSize: 10
+    }
+  ]);
+
+  const [hostName, hostProcesses] = hostEntries[selectedHostIndex];
+  
+  // Crear opciones para el selector de procesos
+  const processChoices = hostProcesses.map((proc, index) => ({
+    name: `📝 ${proc.name || `Proceso ${proc.originalIndex + 1}`} (${proc.commands.length} comando${proc.commands.length !== 1 ? 's' : ''})`,
+    value: index,
+    short: proc.name || `Proceso ${proc.originalIndex + 1}`
+  }));
+
+  const { selectedProcessIndex } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "selectedProcessIndex",
+      message: `📋 Selecciona un proceso de "${hostName}":`,
+      choices: processChoices,
+      pageSize: 10
+    }
+  ]);
+
+  const selectedProcess = hostProcesses[selectedProcessIndex];
+  
+  // Mostrar información del proceso antes de ejecutar
+  console.clear(); // Limpiar antes de mostrar información del proceso
+  console.log(`\n📊 Información del proceso:`);
+  console.log(`┌─ Proceso seleccionado ────────────────────────────────────────────┐`);
+  console.log(`│ 📝 Nombre: ${selectedProcess.name || 'Sin nombre'}`);
+  console.log(`│ 🏠 Host: ${hostName}`);
+  console.log(`│ 🌐 Servidor: ${selectedProcess.config.host}:${selectedProcess.config.port}`);
+  console.log(`│ 👤 Usuario: ${selectedProcess.config.username}`);
+  console.log(`│ ⚙️  Comandos: ${selectedProcess.commands.length} comando(s)`);
+  console.log(`└───────────────────────────────────────────────────────────────────┘`);
+  
+  console.log(`\n📋 Comandos a ejecutar:`);
+  selectedProcess.commands.forEach((cmd, i) => {
+    console.log(`  ${i + 1}. ${cmd}`);
+  });
+
+  const { confirmExecution } = await inquirer.prompt([
+    {
+      type: "confirm",
+      name: "confirmExecution",
+      message: "¿Deseas ejecutar este proceso?",
+      default: true
+    }
+  ]);
+
+  if (confirmExecution) {
+    await runSshProcess(selectedProcess);
+  } else {
+    console.log("❌ Ejecución cancelada.");
+  }
+}
+
+// Eliminar proceso de forma interactiva
+async function deleteInteractiveProcess() {
+  const processes = loadSshProcesses();
+  
+  // Limpiar pantalla para el modo de eliminación
+  console.clear();
+  
+  if (processes.length === 0) {
+    console.log("\n📭 No hay procesos SSH guardados para eliminar.");
+    return;
+  }
+
+  // Crear opciones para el selector de procesos a eliminar
+  const processChoices = processes.map((proc, index) => ({
+    name: `📝 ${proc.name || `Proceso ${index + 1}`} - 🏠 ${proc.config.hostName || 'Sin nombre'} (${proc.config.host})`,
+    value: index,
+    short: proc.name || `Proceso ${index + 1}`
+  }));
+
+  // Agregar opción para cancelar
+  processChoices.push({
+    name: "❌ Cancelar",
+    value: -1
+  });
+
+  const { selectedProcessIndex } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "selectedProcessIndex",
+      message: "🗑️  Selecciona el proceso a eliminar:",
+      choices: processChoices,
+      pageSize: 10
+    }
+  ]);
+
+  if (selectedProcessIndex === -1) {
+    console.log("❌ Operación cancelada.");
+    return;
+  }
+
+  const processToDelete = processes[selectedProcessIndex];
+  
+  // Mostrar información del proceso antes de eliminar
+  console.clear(); // Limpiar antes de mostrar información del proceso a eliminar
+  console.log(`\n⚠️  Estás a punto de eliminar:`);
+  console.log(`┌─ Proceso a eliminar ──────────────────────────────────────────────┐`);
+  console.log(`│ 📝 Nombre: ${processToDelete.name || `Proceso ${selectedProcessIndex + 1}`}`);
+  console.log(`│ 🏠 Host: ${processToDelete.config.hostName || 'Sin nombre'}`);
+  console.log(`│ 🌐 Servidor: ${processToDelete.config.host}:${processToDelete.config.port}`);
+  console.log(`│ 👤 Usuario: ${processToDelete.config.username}`);
+  console.log(`│ ⚙️  Comandos: ${processToDelete.commands.length} comando(s)`);
+  console.log(`└───────────────────────────────────────────────────────────────────┘`);
+
+  const { confirmDeletion } = await inquirer.prompt([
+    {
+      type: "confirm",
+      name: "confirmDeletion",
+      message: "⚠️  ¿Estás seguro de que deseas eliminar este proceso? Esta acción no se puede deshacer.",
+      default: false
+    }
+  ]);
+
+  if (confirmDeletion) {
+    // Eliminar el proceso del array
+    processes.splice(selectedProcessIndex, 1);
+    
+    // Guardar la lista actualizada
+    saveSshProcesses(processes);
+    
+    // Mostrar confirmación de eliminación
+    console.clear();
+    console.log(`
+    ╔═════════════════════════════════════════════════════════════╗
+    ║                                                    
+    ║               ✅ PROCESO ELIMINADO EXITOSAMENTE             
+    ║                                                    
+    ╚═════════════════════════════════════════════════════════════╝
+    `);
+    
+    console.log(`🗑️  Proceso eliminado: ${processToDelete.name || `Proceso ${selectedProcessIndex + 1}`}`);
+    console.log(`🏠 Host: ${processToDelete.config.hostName || 'Sin nombre'}`);
+    console.log(`📊 Procesos restantes: ${processes.length}`);
+  } else {
+    console.clear();
+    console.log(`
+    ╔═════════════════════════════════════════════════════════════╗
+    ║                                                    
+    ║               ❌ ELIMINACIÓN CANCELADA                      
+    ║                                                    
+    ╚═════════════════════════════════════════════════════════════╝
+    `);
+    console.log("El proceso no fue eliminado.");
+  }
 }
 
 // Función principal
 async function main() {
+  // Limpiar pantalla al inicio solo para el modo CLI
+  if (process.argv.length > 2) {
+    console.clear();
+  }
+  
   // Banner profesional del CLI
   console.log(`
-    ╔══════════════════════════════════════════════════════════════╗
-    ║                                                              ║
-    ║              _____ _____ _   _     _____  _     _            ║
-    ║             |   __|   __| |_| |   |  ___|| |   | |           ║
-    ║             |___  |___  |  _  |   | |___ | |___| |           ║
-    ║             |_____|_____|_| |_|   |_____||_____|_|           ║
-    ║                                                              ║
-    ║             🚀 SSH Remote Command Executor v1.0.0            ║
-    ║                                                              ║
-    ╠══════════════════════════════════════════════════════════════╣
-    ║                                                              ║
-    ║  📋 Gestiona conexiones SSH y ejecuta comandos remotos       ║
-    ║  💾 Guarda procesos para reutilización futura                ║
-    ║  🔐 Soporte automático para comandos sudo                    ║
-    ║  📊 Registro detallado de ejecuciones                        ║
-    ║                                                              ║
-    ║  💡 Ejecuta 'ssh-cli help' para ver comandos                 ║
-    ║                                                              ║
-    ╚══════════════════════════════════════════════════════════════╝
+    ╔═════════════════════════════════════════════════════════════╗
+    ║                                                    
+    ║              _____ _____ _   _     _____  _     _  
+    ║             |   __|   __| |_| |   |  ___|| |   | | 
+    ║             |___  |___  |  _  |   | |___ | |___| | 
+    ║             |_____|_____|_| |_|   |_____||_____|_| 
+    ║                                                    
+    ║             🚀 SSH Remote Command Executor v1.0.0  
+    ║                                                    
+    ╠══════════════════════════════════════════════════════════════
+    ║                                                        
+    ║  📋 Gestiona conexiones SSH y ejecuta comandos remotos 
+    ║  💾 Guarda procesos para reutilización futura          
+    ║  🔐 Soporte automático para comandos sudo              
+    ║  📊 Registro detallado de ejecuciones                  
+    ║                                                        
+    ║  💡 Ejecuta 'ssh-cli help' para ver comandos           
+    ║                                                        
+    ╚═════════════════════════════════════════════════════════════╝
   `);
   
   const args = process.argv.slice(2);
   const command = args[0];
 
+  // Si no hay argumentos, mostrar menú interactivo
+  if (args.length === 0) {
+    await showInteractiveMenu();
+    return;
+  }
+
+  // Procesamiento de comandos por argumentos (mantener compatibilidad)
   if (command === "help") {
     showHelp();
     return;
@@ -681,15 +1465,66 @@ async function main() {
   }
 
   if (command === "start") {
+    const hostFlag = args.indexOf("-h");
     const processIdFlag = args.indexOf("-p");
     
-    if (processIdFlag !== -1 && args[processIdFlag + 1]) {
-      // Ejecutar proceso específico
+    if (hostFlag !== -1 && processIdFlag !== -1 && args[hostFlag + 1] && args[processIdFlag + 1]) {
+      // Ejecutar proceso específico por ID de host y posición
+      const hostId = parseInt(args[hostFlag + 1]);
+      const position = parseInt(args[processIdFlag + 1]) - 1;
+      const processes = loadSshProcesses();
+      
+      if (isNaN(hostId) || hostId <= 0) {
+        console.log("❌ ID de host inválido. Debe ser un número mayor a 0.");
+        console.log("💡 Usa 'ssh-cli list' para ver los IDs de host disponibles.");
+        return;
+      }
+      
+      // Agrupar procesos por host
+      const groupedByHost = {};
+      processes.forEach((proc, originalIndex) => {
+        const procHostName = proc.config.hostName || 'Sin nombre de host';
+        if (!groupedByHost[procHostName]) {
+          groupedByHost[procHostName] = [];
+        }
+        groupedByHost[procHostName].push({
+          ...proc,
+          originalIndex: originalIndex
+        });
+      });
+      
+      const hostEntries = Object.entries(groupedByHost);
+      const hostIndex = hostId - 1;
+      
+      if (hostIndex < 0 || hostIndex >= hostEntries.length) {
+        console.log(`❌ No se encontró el host con ID "${hostId}".`);
+        console.log(`💡 Hay ${hostEntries.length} host(s) disponible(s).`);
+        console.log("💡 Usa 'ssh-cli list' para ver los IDs de host disponibles.");
+        return;
+      }
+      
+      const [hostName, hostProcesses] = hostEntries[hostIndex];
+      
+      if (position < 0 || position >= hostProcesses.length) {
+        console.log(`❌ Posición inválida para el host ID "${hostId}" (${hostName}).`);
+        console.log(`💡 El host "${hostName}" tiene ${hostProcesses.length} proceso(s).`);
+        console.log("💡 Usa 'ssh-cli list' para ver las posiciones disponibles.");
+        return;
+      }
+      
+      const selectedProcess = hostProcesses[position];
+      console.log(`🎯 Ejecutando proceso en posición ${position + 1} del host ID ${hostId} (${hostName})`);
+      await runSshProcess(selectedProcess);
+      
+    } else if (processIdFlag !== -1 && args[processIdFlag + 1]) {
+      // Mantener compatibilidad con el método anterior (por ID global)
       const processIndex = parseInt(args[processIdFlag + 1]) - 1;
       const processes = loadSshProcesses();
       
       if (processIndex >= 0 && processIndex < processes.length) {
         const selectedProcess = processes[processIndex];
+        console.log("⚠️  Usando método de selección por ID global (obsoleto).");
+        console.log("💡 Considera usar: ssh-cli start -h <host_id> -p <posición>");
         await runSshProcess(selectedProcess);
       } else {
         console.log("❌ Número de proceso inválido. Usa 'list' para ver los procesos disponibles.");
@@ -723,8 +1558,11 @@ async function main() {
     return;
   }
 
-  // Si no hay comando específico, mostrar ayuda
-  showHelp();
+  // Si el comando no es reconocido, mostrar menú interactivo
+  console.clear();
+  console.log(`⚠️  Comando '${command}' no reconocido.`);
+  console.log(`💡 Iniciando modo interactivo...\n`);
+  await showInteractiveMenu();
 }
 
 main().catch((err) => {

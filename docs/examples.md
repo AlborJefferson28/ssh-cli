@@ -1,157 +1,435 @@
 # 💡 Ejemplos de Uso
 
-## 🚀 Casos de Uso Comunes
+## 🖱️ Ejemplos en Modo Interactivo (Recomendado)
 
-### 1. Deploy Automático de Aplicación Web
+### 1. Deploy Automático Comando 11: sudo systemctl status redis
+```
+
+### 2.1. Agregar Proceso a Host Existente
+
+**Escenario:** Agregar un nuevo proceso al "Servidor Monitor" ya existente
+
+**Ejecutar:** `node index.mjs`
+
+**Navegación:**
+1. Seleccionar: **🚀 Crear nuevo proceso SSH**
+2. **Detección de Host Existente:**
+   ```
+   🌐 Host remoto: servidor-monitor.empresa.com
+   
+   ✅ Host encontrado: Servidor Monitor (servidor-monitor.empresa.com)
+   📊 Procesos existentes para este host: 1
+   🔌 Puerto SSH (actual: 22): [22]
+   👤 Usuario SSH (actual: admin): [admin]
+   🔐 Contraseña: ********
+   ```
+
+3. **Pantalla de Comandos con Contexto:**
+   ```
+   🏠 Host: Servidor Monitor
+   🌐 Servidor: servidor-monitor.empresa.com:22
+   👤 Usuario: admin
+   📊 Procesos existentes: 1
+   
+   📋 Agrega comandos a ejecutar:
+   ⚙️  Comando 1: sudo systemctl list-units --failed
+   ➕ ¿Quieres agregar otro comando? Yes
+   ⚙️  Comando 2: journalctl -f --lines=20
+   ➕ ¿Quieres agregar otro comando? No
+   ```
+
+4. **Pantalla de Guardado:**
+   ```
+   🏠 Host: Servidor Monitor
+   🌐 Servidor: servidor-monitor.empresa.com:22
+   👤 Usuario: admin
+   📋 Comandos configurados: 2
+   📊 Procesos existentes en este host: 1
+   
+   ¿Deseas guardar este proceso SSH para uso futuro? Yes
+   Nombre para este proceso SSH: Check System Errors
+   ```
+
+**Resultado:** El nuevo proceso se agrega automáticamente al host "Servidor Monitor" existente.
+
+**Navegación posterior:**plicación Web
+
+**Ejecutar:** `node index.mjs`
+
+**Navegación Interactiva con Detección Inteligente:**
+1. Seleccionar: **🚀 Crear nuevo proceso SSH**
+2. **Pantalla de Configuración (Flujo Inteligente):**
+   ```
+   � Host remoto: servidor-prod.empresa.com
+   
+   � Host nuevo detectado: servidor-prod.empresa.com
+   🏷️  Nombre del Host: Servidor Producción
+   🔌 Puerto SSH: 22
+   👤 Usuario SSH: deploy
+   🔐 Contraseña: ********
+   ```
+
+3. **Pantalla de Comandos:**
+   ```
+   🏠 Host: Servidor Producción
+   🌐 Servidor: servidor-prod.empresa.com:22
+   👤 Usuario: deploy
+   
+   📋 Agrega comandos a ejecutar:
+   ⚙️  Comando 1: cd /var/www/mi-aplicacion
+   ➕ ¿Quieres agregar otro comando? Yes
+   ⚙️  Comando 2: git pull origin main
+   ➕ ¿Quieres agregar otro comando? Yes
+   ⚙️  Comando 3: npm install --production
+   ➕ ¿Quieres agregar otro comando? Yes
+   ⚙️  Comando 4: npm run build
+   ➕ ¿Quieres agregar otro comando? Yes
+   ⚙️  Comando 5: sudo systemctl restart nginx
+   ➕ ¿Quieres agregar otro comando? Yes
+   ⚙️  Comando 6: sudo systemctl restart mi-aplicacion
+   ➕ ¿Quieres agregar otro comando? Yes
+   ⚙️  Comando 7: sudo systemctl status mi-aplicacion
+   ➕ ¿Quieres agregar otro comando? No
+   ```
+
+4. **Pantalla de Guardado:**
+   ```
+   🏠 Host: Servidor Producción
+   🌐 Servidor: servidor-prod.empresa.com:22
+   👤 Usuario: deploy
+   📋 Comandos configurados: 7
+   
+   ¿Deseas guardar este proceso SSH para uso futuro? Yes
+   Nombre para este proceso SSH: Deploy Aplicación Web
+   ```
+
+5. **Confirmación y Ejecución:**
+   ```
+   🚀 ¿Ejecutar ahora? Yes
+   ```
+
+**Reutilización:**
+- **Navegación:** `node index.mjs` → "📋 Navegar procesos SSH por host" → "Servidor Producción" → "Deploy Aplicación Web" → "🚀 Ejecutar"
+- **CLI:** `node index.mjs start -h 1 -p 1`
+
+### 2. Monitoreo de Sistema Interactivo
+
+**Ejecutar:** `node index.mjs`
+
+**Configuración del Proceso con Detección Inteligente:**
+```
+🌐 Host remoto: servidor-monitor.empresa.com
+
+🆕 Host nuevo detectado: servidor-monitor.empresa.com
+🏷️  Nombre del Host: Servidor Monitor
+🔌 Puerto SSH: 22
+👤 Usuario SSH: admin
+🔐 Contraseña: ********
+```
+
+**Comandos mediante Wizard:**
+```
+🏠 Host: Servidor Monitor
+🌐 Servidor: servidor-monitor.empresa.com:22
+👤 Usuario: admin
+
+📋 CONFIGURAR COMANDOS SSH
+
+Comando 1: echo "=== INFORMACIÓN DEL SISTEMA ==="
+Comando 2: uname -a
+Comando 3: echo "=== USO DE DISCO ==="
+Comando 4: df -h
+Comando 5: echo "=== USO DE MEMORIA ==="
+Comando 6: free -m
+Comando 7: echo "=== PROCESOS TOP ==="
+Comando 8: top -bn1 | head -15
+Comando 9: echo "=== SERVICIOS CRÍTICOS ==="
+Comando 10: sudo systemctl status nginx
+Comando 11: sudo systemctl status mysql
+Comando 12: sudo systemctl status redis
+```
+
+**Navegación posterior:**
+```
+📋 Procesos SSH Guardados (Agrupados por Host)
+═══════════════════════════════════════════════════════
+🏠 HOST ID: 1 | NOMBRE: Servidor Producción
+📊 Total de procesos: 1
+    1. Deploy Aplicación Web
+
+🏠 HOST ID: 2 | NOMBRE: Servidor Monitor
+📊 Total de procesos: 2
+    1. Monitoreo Sistema Completo
+    2. Check System Errors
+```
+
+### 3. Gestión Multi-Host con Navegación Visual
+
+**Escenario:** Varios servidores con múltiples procesos cada uno
+
+**Host 1: Servidor Producción**
+- Deploy Frontend
+- Deploy Backend  
+- Backup Database
+- Restart Services
+
+**Host 2: Servidor Testing**
+- Run Test Suite
+- Performance Test
+- Deploy Staging
+
+**Host 3: Servidor Desarrollo**
+- Git Sync
+- Database Seed
+- Start Dev Server
+
+**Navegación visual resultante:**
+```
+📋 Procesos SSH Guardados (Agrupados por Host)
+═══════════════════════════════════════════════════════
+🏠 HOST ID: 1 | NOMBRE: Servidor Producción  
+📊 Total de procesos: 4
+    1. Deploy Frontend
+    2. Deploy Backend
+    3. Backup Database
+    4. Restart Services
+
+🏠 HOST ID: 2 | NOMBRE: Servidor Testing
+📊 Total de procesos: 3
+    1. Run Test Suite
+    2. Performance Test
+    3. Deploy Staging
+
+🏠 HOST ID: 3 | NOMBRE: Servidor Desarrollo
+📊 Total de procesos: 3
+    1. Git Sync
+    2. Database Seed
+    3. Start Dev Server
+
+? ¿Qué host deseas navegar?
+> 🏠 Servidor Producción (4 procesos)
+  🏠 Servidor Testing (3 procesos)
+  🏠 Servidor Desarrollo (3 procesos)
+  🚪 Volver al menú principal
+```
+
+**Navegación en Host específico:**
+```
+🏠 Host: Servidor Producción
+📊 Procesos disponibles: 4
+──────────────────────────────────────────────────
+
+? 📋 Selecciona un proceso de "Servidor Producción":
+> 📝 Deploy Frontend (5 comandos)
+  📝 Deploy Backend (7 comandos)
+  📝 Backup Database (4 comandos)
+  📝 Restart Services (3 comandos)
+  ⬅️  Volver a la lista de hosts
+```
+
+### 4. Eliminación Segura con Confirmación Visual
+
+**Ejecutar:** `node index.mjs`
+
+**Navegación:**
+1. Seleccionar: **🗑️ Eliminar proceso**
+2. **Lista de procesos:**
+   ```
+   ? 🗑️  Selecciona el proceso a eliminar:
+   > 📝 Deploy Frontend - 🏠 Servidor Producción (servidor-prod.com)
+     📝 Test Old Process - 🏠 Servidor Testing (test.empresa.com)
+     📝 Backup Database - 🏠 Servidor Producción (servidor-prod.com)
+     ❌ Cancelar
+   ```
+
+3. **Confirmación visual:**
+   ```
+   ╔═════════════════════════════════════════════════════════════╗
+   ║                                                    
+   ║               ⚠️  PROCESO A ELIMINAR                       
+   ║                                                    
+   ╚═════════════════════════════════════════════════════════════╝
+   
+   ⚠️  Estás a punto de eliminar:
+   ┌─ Proceso a eliminar ──────────────────────────────────────┐
+   │ 📝 Nombre: Test Old Process                               │
+   │ 🏠 Host: Servidor Testing                                 │
+   │ 🌐 Servidor: test.empresa.com:22                          │
+   │ 👤 Usuario: tester                                        │
+   │ ⚙️  Comandos: 3 comando(s)                                │
+   └────────────────────────────────────────────────────────────┘
+   
+   ? ⚠️  ¿Estás seguro de que deseas eliminar este proceso? No
+   ```
+
+4. **Resultado:**
+   ```
+   ╔═════════════════════════════════════════════════════════════╗
+   ║                                                    
+   ║               ❌ ELIMINACIÓN CANCELADA                      
+   ║                                                    
+   ╚═════════════════════════════════════════════════════════════╝
+   
+   El proceso no fue eliminado.
+   ```
+
+### 5. Estadísticas Visuales en Modo Interactivo
+
+**Ejecutar:** `node index.mjs` → **📊 Ver estadísticas**
+
+**Resultado:**
+```
+📊 Estadísticas de Procesos SSH
+══════════════════════════════════════════════════════
+📝 Total de procesos: 10
+🏠 Hosts únicos: 3
+⚙️  Total de comandos: 47
+📊 Promedio de comandos por proceso: 4.7
+
+📋 Desglose por host:
+  🏠 Servidor Producción
+     📝 Procesos: 4
+     ⚙️  Comandos: 22
+     🌐 Servidores: servidor-prod.empresa.com:22
+
+  🏠 Servidor Testing
+     📝 Procesos: 3
+     ⚙️  Comandos: 14
+     🌐 Servidores: test.empresa.com:22
+
+  🏠 Servidor Desarrollo
+     📝 Procesos: 3
+     ⚙️  Comandos: 11
+     🌐 Servidores: dev.empresa.com:22
+
+──────────────────────────────────────────────────────────────
+Presiona Enter para continuar...
+```
+
+---
+
+## 🔧 Ejemplos en Modo CLI Tradicional
+
+### 1. Deploy con Nuevo Sistema de Selección
+
+**Listar procesos agrupados:**
+```bash
+node index.mjs list
+```
+
+**Salida:**
+```
+📋 Procesos SSH Guardados (Agrupados por Host)
+═══════════════════════════════════════════════════════
+🏠 HOST ID: 1 | NOMBRE: Servidor Producción
+📊 Total de procesos: 2
+    1. Deploy Frontend
+    2. Deploy Backend
+
+💡 Uso: ssh-cli start -h <host_id> -p <posición> para ejecutar un proceso
+```
+
+**Ejecutar proceso específico:**
+```bash
+# Ejecutar "Deploy Frontend" (Host ID 1, posición 1)
+node index.mjs start -h 1 -p 1
+
+# Ejecutar "Deploy Backend" (Host ID 1, posición 2)  
+node index.mjs start -h 1 -p 2
+```
+
+### 2. Creación de Proceso con Validaciones
 
 ```bash
 node index.mjs start
 ```
 
-**Configuración:**
-- Host: `servidor-prod.empresa.com`
-- Usuario: `deploy`
-- Nombre del proceso: `Deploy Aplicación Web`
+**Flujo con validaciones:**
+```
+╔═════════════════════════════════════════════════════════════╗
+║                                                    
+║                🚀 CREAR NUEVO PROCESO SSH               
+║                                                    
+╚═════════════════════════════════════════════════════════════╝
+
+? 🏷️  Nombre del Host: AB
+❌ El nombre debe tener al menos 3 caracteres
+? 🏷️  Nombre del Host: Mi Servidor Test
+
+? 🌐 Host remoto: servidor@inválido
+❌ Formato de host inválido. Usa solo letras, números, puntos y guiones.
+? 🌐 Host remoto: test-server.com
+
+? 🔌 Puerto SSH: 99999
+❌ Puerto inválido. Debe ser un número entre 1 y 65535.
+? 🔌 Puerto SSH: 2222
+
+? 👤 Usuario SSH: 
+❌ El usuario es obligatorio
+? 👤 Usuario SSH: admin
+
+? 🔐 Contraseña: 
+❌ La contraseña es obligatoria
+? 🔐 Contraseña: ********
+```
+
+### 3. Manejo de Errores de Selección
+
+**Host ID inválido:**
+```bash
+node index.mjs start -h 5 -p 1
+```
+```
+❌ No se encontró el host con ID "5".
+💡 Hay 3 host(s) disponible(s).
+💡 Usa 'ssh-cli list' para ver los IDs de host disponibles.
+```
+
+**Posición inválida:**
+```bash
+node index.mjs start -h 1 -p 5
+```
+```
+❌ Posición inválida para el host ID "1" (Servidor Producción).
+💡 El host "Servidor Producción" tiene 2 proceso(s).
+💡 Usa 'ssh-cli list' para ver las posiciones disponibles.
+```
+
+### 4. Comando No Reconocido → Modo Interactivo
+
+```bash
+node index.mjs comando-inexistente
+```
+```
+⚠️  Comando 'comando-inexistente' no reconocido.
+💡 Iniciando modo interactivo...
+
+╔═════════════════════════════════════════════════════════════╗
+║                                                    
+║              _____ _____ _   _     _____  _     _  
+║             |   __|   __| |_| |   |  ___|| |   | | 
+║             |___  |___  |  _  |   | |___ | |___| | 
+║             |_____|_____|_| |_|   |_____||_____|_| 
+║                                                    
+║             🚀 SSH Remote Command Executor v1.0.0  
+║                                                    
+╚═════════════════════════════════════════════════════════════╝
+
+🚀 ¿Qué deseas hacer?
+```
+
+---
+
+## 🔍 Ejemplos de Casos de Uso Específicos
+
+### Desarrollo con Docker
+
+**Configuración interactiva:**
+- **Host:** `Servidor Docker`
+- **Proceso:** `Deploy Docker App`
 
 **Comandos:**
 ```bash
-cd /var/www/mi-aplicacion
-git pull origin main
-npm install --production
-npm run build
-sudo systemctl restart nginx
-sudo systemctl restart mi-aplicacion
-sudo systemctl status mi-aplicacion
-```
-
-### 2. Monitoreo de Sistema
-
-```bash
-node index.mjs start
-```
-
-**Configuración:**
-- Host: `servidor-monitor.empresa.com`
-- Usuario: `admin`
-- Nombre del proceso: `Chequeo Sistema`
-
-**Comandos:**
-```bash
-echo "=== INFORMACIÓN DEL SISTEMA ==="
-uname -a
-echo "=== USO DE DISCO ==="
-df -h
-echo "=== USO DE MEMORIA ==="
-free -m
-echo "=== PROCESOS TOP ==="
-top -bn1 | head -15
-echo "=== SERVICIOS CRÍTICOS ==="
-sudo systemctl status nginx
-sudo systemctl status mysql
-sudo systemctl status redis
-```
-
-### 3. Backup de Base de Datos
-
-```bash
-node index.mjs start
-```
-
-**Configuración:**
-- Host: `servidor-db.empresa.com`
-- Usuario: `backup`
-- Nombre del proceso: `Backup MySQL`
-
-**Comandos:**
-```bash
-cd /backup
-echo "Iniciando backup de MySQL..."
-mysqldump -u root -p mi_base_datos > backup_$(date +%Y%m%d_%H%M%S).sql
-ls -lah backup_*.sql | tail -5
-echo "Limpiando backups antiguos..."
-find /backup -name "backup_*.sql" -mtime +7 -delete
-echo "Backup completado"
-```
-
-### 4. Actualización de Sistema
-
-```bash
-node index.mjs start
-```
-
-**Configuración:**
-- Host: `servidor-update.empresa.com`
-- Usuario: `admin`
-- Nombre del proceso: `Actualización Sistema`
-
-**Comandos:**
-```bash
-echo "Actualizando paquetes del sistema..."
-sudo apt update
-sudo apt list --upgradable
-sudo apt upgrade -y
-sudo apt autoremove -y
-echo "Verificando servicios después de actualización..."
-sudo systemctl status nginx
-sudo systemctl status mysql
-echo "Actualización completada"
-```
-
-### 5. Análisis de Logs
-
-```bash
-node index.mjs start
-```
-
-**Configuración:**
-- Host: `servidor-logs.empresa.com`
-- Usuario: `logadmin`
-- Nombre del proceso: `Análisis Logs`
-
-**Comandos:**
-```bash
-echo "=== ERRORES EN NGINX ==="
-sudo tail -100 /var/log/nginx/error.log | grep ERROR
-echo "=== ACCESOS RECIENTES ==="
-sudo tail -50 /var/log/nginx/access.log
-echo "=== ERRORES DE APLICACIÓN ==="
-sudo tail -100 /var/log/mi-app/error.log
-echo "=== ESPACIO EN LOGS ==="
-sudo du -sh /var/log/*
-```
-
-## 🔧 Ejemplos por Tecnología
-
-### Node.js/Express
-
-```bash
-# Proceso: "Deploy Node.js"
-cd /var/www/node-app
-git pull origin main
-npm install --production
-npm run build
-pm2 restart mi-app
-pm2 logs mi-app --lines 20
-```
-
-### Python/Django
-
-```bash
-# Proceso: "Deploy Django"
-cd /var/www/django-app
-git pull origin main
-source venv/bin/activate
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py collectstatic --noinput
-sudo systemctl restart gunicorn
-sudo systemctl restart nginx
-```
-
-### Docker/Docker Compose
-
-```bash
-# Proceso: "Deploy Docker"
 cd /var/www/docker-app
 git pull origin main
 sudo docker-compose down
@@ -161,10 +439,14 @@ sudo docker ps
 sudo docker logs mi-container --tail 20
 ```
 
-### PHP/Laravel
+### PHP/Laravel Deployment
 
+**Configuración interactiva:**
+- **Host:** `Servidor Laravel`
+- **Proceso:** `Deploy Laravel Production`
+
+**Comandos:**
 ```bash
-# Proceso: "Deploy Laravel"
 cd /var/www/laravel-app
 git pull origin main
 composer install --no-dev --optimize-autoloader
@@ -176,139 +458,99 @@ sudo systemctl restart php8.1-fpm
 sudo systemctl restart nginx
 ```
 
-## 🔍 Ejemplos de Diagnóstico
+### Python/Django Deployment
 
-### Diagnóstico de Red
+**Configuración interactiva:**
+- **Host:** `Servidor Django`
+- **Proceso:** `Deploy Django App`
 
+**Comandos:**
 ```bash
-# Proceso: "Diagnóstico Red"
-echo "=== CONECTIVIDAD ==="
-ping -c 3 8.8.8.8
-echo "=== DNS ==="
-nslookup google.com
-echo "=== PUERTOS ABIERTOS ==="
-sudo netstat -tlnp
-echo "=== CONEXIONES ACTIVAS ==="
-sudo ss -tuln
+cd /var/www/django-app
+git pull origin main
+source venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py collectstatic --noinput
+sudo systemctl restart gunicorn
+sudo systemctl restart nginx
 ```
 
-### Diagnóstico de Performance
+---
 
-```bash
-# Proceso: "Performance Check"
-echo "=== CPU Y MEMORIA ==="
-top -bn1 | head -20
-echo "=== E/S DE DISCO ==="
-iostat -x 1 3
-echo "=== PROCESOS QUE MÁS CONSUMEN ==="
-ps aux --sort=-%cpu | head -10
-ps aux --sort=-%mem | head -10
-echo "=== CARGA DEL SISTEMA ==="
-uptime
+## 💡 Consejos para Ejemplos Avanzados
+
+### 1. Organización por Propósito
+```
+🏠 Servidor Producción
+    1. Deploy Frontend
+    2. Deploy Backend
+    3. Deploy API
+    4. Backup Database
+    5. Restart All Services
+    6. Health Check
+
+🏠 Servidor Testing
+    1. Deploy Staging
+    2. Run Integration Tests
+    3. Performance Tests
+    4. Security Scan
+
+🏠 Servidor Desarrollo
+    1. Sync Development
+    2. Reset Database
+    3. Start Dev Services
+    4. Run Unit Tests
 ```
 
-### Diagnóstico de Seguridad
-
-```bash
-# Proceso: "Security Check"
-echo "=== USUARIOS LOGUEADOS ==="
-who
-echo "=== INTENTOS DE LOGIN FALLIDOS ==="
-sudo grep "Failed password" /var/log/auth.log | tail -10
-echo "=== PROCESOS SOSPECHOSOS ==="
-ps aux | grep -E "(nc|netcat|telnet)" | grep -v grep
-echo "=== PUERTOS NO ESTÁNDAR ==="
-sudo netstat -tlnp | grep -v -E ":(22|80|443|53|25) "
-```
-
-## 📊 Ejemplos de Automatización
-
-### Rotación de Logs
-
-```bash
-# Proceso: "Rotación Logs"
-echo "Rotando logs de aplicación..."
-cd /var/log/mi-app
-sudo gzip app.log
-sudo mv app.log.gz app-$(date +%Y%m%d).log.gz
-sudo touch app.log
-sudo chown mi-app:mi-app app.log
-sudo systemctl reload mi-app
-echo "Limpiando logs antiguos..."
-find /var/log/mi-app -name "*.gz" -mtime +30 -delete
-```
-
-### Verificación de Certificados SSL
-
-```bash
-# Proceso: "Check SSL"
-echo "Verificando certificados SSL..."
-echo | openssl s_client -servername mi-dominio.com -connect mi-dominio.com:443 2>/dev/null | openssl x509 -noout -dates
-echo "Verificando configuración nginx..."
-sudo nginx -t
-echo "Estado del servicio nginx..."
-sudo systemctl status nginx
-```
-
-### Limpieza de Sistema
-
-```bash
-# Proceso: "Limpieza Sistema"
-echo "Limpiando archivos temporales..."
-sudo rm -rf /tmp/*
-echo "Limpiando cache de apt..."
-sudo apt clean
-sudo apt autoclean
-echo "Limpiando logs del journal..."
-sudo journalctl --vacuum-time=7d
-echo "Espacio disponible:"
-df -h
-```
-
-## 🎯 Consejos para Procesos Complejos
-
-### 1. Manejo de Errores
+### 2. Comandos con Manejo de Errores
 ```bash
 # En lugar de:
-comando_que_puede_fallar
-
-# Usa:
-comando_que_puede_fallar || echo "FALLÓ: comando_que_puede_fallar"
-```
-
-### 2. Verificaciones Intermedias
-```bash
 git pull origin main
-if [ $? -eq 0 ]; then echo "✅ Git pull exitoso"; else echo "❌ Git pull falló"; fi
+
+# Usa en el wizard:
+git pull origin main || echo "❌ FALLÓ: Git pull"
+npm install --production || echo "❌ FALLÓ: npm install"
+sudo systemctl restart nginx && echo "✅ ÉXITO: nginx reiniciado" || echo "❌ FALLÓ: nginx restart"
 ```
 
-### 3. Comandos Condicionales
-```bash
-# Solo reiniciar si el config es válido
-nginx -t && sudo systemctl restart nginx || echo "Config nginx inválido"
-```
-
-### 4. Información de Contexto
+### 3. Comandos Informativos
 ```bash
 echo "=== INICIANDO DEPLOY $(date) ==="
 echo "Usuario: $(whoami)"
 echo "Directorio: $(pwd)"
 echo "Branch actual: $(git branch --show-current)"
+echo "=== DEPLOY COMPLETADO ==="
 ```
 
-## 🚀 Ejecutar Ejemplos
-
-Para usar cualquiera de estos ejemplos:
-
-1. **Copia los comandos** del ejemplo que te interese
-2. **Ejecuta** `node index.mjs start`
-3. **Configura** host, usuario y contraseña
-4. **Pega los comandos** uno por uno
-5. **Guarda el proceso** con un nombre descriptivo
-6. **Ejecuta inmediatamente** o guárdalo para después
-
-Luego podrás reutilizarlo con:
+### 4. Verificaciones Intermedias
 ```bash
-node index.mjs list  # Ver todos los procesos
-node index.mjs start -p 1  # Ejecutar proceso por ID
+git pull origin main
+if [ $? -eq 0 ]; then echo "✅ Git pull exitoso"; else echo "❌ Git pull falló"; exit 1; fi
+npm run build
+if [ $? -eq 0 ]; then echo "✅ Build exitoso"; else echo "❌ Build falló"; exit 1; fi
 ```
+
+---
+
+## 🚀 Flujos Completos de Trabajo
+
+### Flujo de Deploy Completo (Modo Interactivo)
+
+1. **Inicio:** `node index.mjs`
+2. **Navegación:** 📋 Navegar procesos SSH por host
+3. **Selección:** Servidor Producción → Deploy Frontend
+4. **Revisión:** Ver comandos y configuración
+5. **Ejecución:** 🚀 Ejecutar este proceso
+6. **Monitoreo:** Ver progreso en tiempo real
+7. **Verificación:** Revisar logs y resultado final
+
+### Flujo de Mantenimiento (Modo CLI)
+
+1. **Lista:** `node index.mjs list`
+2. **Selección:** Identificar Host ID y posición
+3. **Ejecución:** `node index.mjs start -h 2 -p 3`
+4. **Monitoreo:** Seguir progreso automáticamente
+5. **Logs:** Revisar archivo de log generado
+
+Todos estos ejemplos aprovechan las nuevas funcionalidades del modo interactivo con navegación visual, validaciones avanzadas, y la organización mejorada por hosts.
