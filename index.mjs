@@ -1425,11 +1425,28 @@ async function runSshProcess(processConfig = null) {
           logStream.end();
           resolve({ connectionError: err });
         })
+        // Handler para autenticación keyboard-interactive (algunos servidores usan este método)
+        .on('keyboard-interactive', (name, instructions, instructionsLang, prompts, finish) => {
+          try {
+            // Si el servidor solicita una respuesta (p. ej. contraseña), responder con la contraseña
+            if (prompts && prompts.length > 0) {
+              // Usar la contraseña proporcionada en connectionConfig
+              finish([connectionConfig.password]);
+            } else {
+              finish([]);
+            }
+          } catch (e) {
+            // En caso de error, responder vacío para no bloquear
+            finish([]);
+          }
+        })
         .connect({
           host: connectionConfig.host,
           port: parseInt(connectionConfig.port, 10) || 22,
           username: connectionConfig.username,
           password: connectionConfig.password,
+          // Intentar keyboard-interactive si el servidor lo requiere
+          tryKeyboard: true,
         });
     });
   };
