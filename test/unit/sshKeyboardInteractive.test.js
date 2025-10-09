@@ -456,13 +456,11 @@ describe('🔐 SSH Keyboard-Interactive Authentication', function() {
       eventHandlers['keyboard-interactive']('Auth2', 'Enter password again', 'en', prompts, finish2);
 
       // Assert
-      setTimeout(() => {
-        expect(finish1.calledOnce).to.be.true;
-        expect(finish1.calledWith([connectionConfig.password])).to.be.true;
-        expect(finish2.calledOnce).to.be.true;
-        expect(finish2.calledWith([connectionConfig.password])).to.be.true;
-        done();
-      }, 20);
+      expect(finish1.calledOnce).to.be.true;
+      expect(finish1.calledWith([connectionConfig.password])).to.be.true;
+      expect(finish2.calledOnce).to.be.true;
+      expect(finish2.calledWith([connectionConfig.password])).to.be.true;
+      done();
     });
   });
 
