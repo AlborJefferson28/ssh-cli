@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-10-09
+
+### Fixed
+- 🔐 **SSH Authentication Enhancement**: Added support for keyboard-interactive authentication method
+  - Added `.on('keyboard-interactive')` event handler for SSH connections
+  - Enabled `tryKeyboard: true` option in SSH client configuration
+  - **Resolves**: "All configured authentication methods failed" error for servers requiring keyboard-interactive auth
+  - **Compatibility**: Maintains full backward compatibility with password authentication
+  - **Scope**: Affects SSH connections to servers with specific PAM configurations
+
+### Technical Details
+- **Root Cause**: Some SSH servers/PAM configurations reject simple password authentication and require keyboard-interactive method
+- **Solution**: Automatic response to keyboard-interactive prompts using provided user password
+- **Implementation**: Enhanced SSH connection establishment in `executeCommands()` function
+- **Testing**: Added comprehensive unit test suite (19 tests) for keyboard-interactive scenarios
+
+### Files Modified
+- `index.mjs`: Enhanced SSH connection configuration with keyboard-interactive support
+- `test/unit/sshKeyboardInteractive.test.js`: New comprehensive test suite for authentication scenarios
+- `package.json`: Version bump to 1.1.1
+- `RELEASE.MD`: Updated with detailed release notes
+
+### Migration Notes
+- **Breaking Changes**: None - fully backward compatible
+- **Action Required**: None - improvement is transparent to users
+- **Benefit**: Automatic resolution of SSH authentication failures for affected servers
+
 ## [1.1.0] - 2025-10-06
 
 ### Added
