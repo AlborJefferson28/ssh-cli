@@ -14,7 +14,7 @@ Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con **m
 ║             |___  |___  |  _  |   | |___ | |___| |           ║
 ║             |_____|_____|_| |_|   |_____||_____|_|           ║
 ║                                                              ║
-║             🚀 SSH Remote Command Executor v1.1.0            ║
+║             🚀 SSH Remote Command Executor v1.1.1            ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
@@ -53,7 +53,7 @@ Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con **m
 - **Monitoreo**: Verificación de estado y métricas de servidores
 - **Gestión de Equipos**: Interface amigable para usuarios no técnicos
 
-## 🆕 Nuevas Características v1.1.0
+## 🆕 Nuevas Características
 
 ### 🧪 Testing y Calidad
 - **Suite de Tests Completa**: Tests unitarios e integración con mocha, chai y sinon
