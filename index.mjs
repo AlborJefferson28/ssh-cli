@@ -297,6 +297,28 @@ function getCommandSpecificPatterns(command) {
   ];
 }
 
+// Función para mostrar estado de progreso de forma consistente
+function displayTaskProgress(host, totalTasks, commandList, taskStatuses, currentIndex = -1) {
+  console.clear();
+  console.log(`✅ Conectado a ${host}`);
+  console.log(`📝 Ejecutando ${totalTasks} tarea(s)...\n`);
+  
+  // Mostrar progreso de todas las tareas de forma limpia
+  commandList.forEach((c, idx) => {
+    let status;
+    if (idx < currentIndex) {
+      status = taskStatuses[idx] || '✅';
+    } else if (idx === currentIndex) {
+      status = '⏳';
+    } else {
+      status = '⏳';
+    }
+    console.log(`  ${status} ${idx + 1}. ${c}`);
+  });
+  
+  console.log(""); // Línea en blanco antes del loader
+}
+
 // Función para mostrar loader animado para procesos paralelos
 function createLoader(message) {
   const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -358,8 +380,7 @@ function createCountdownSelector(message, timeSeconds, callback) {
 
 // Función para manejar selección interactiva con contador para comandos paralelos
 async function handleParallelCommandChoice(cmd, remainingCommands) {
-  console.log(`\n⚠️  Comando de larga duración detectado: ${cmd}`);
-  console.log(`🔗 Nuevo enfoque: Ejecutar y esperar a que esté listo, luego continuar en conexión paralela`);
+  console.log(`\n⚠️  Ejecución en primer plano detectada: ${cmd}`);
   
   // Si hay comandos siguientes, mostrar contador automático
   const hasRemainingCommands = remainingCommands && remainingCommands.length > 0;
@@ -432,10 +453,6 @@ async function handleParallelCommandChoice(cmd, remainingCommands) {
               value: "parallel"
             },
             {
-              name: "🔄 Ejecutar en background (método anterior)",
-              value: "background"
-            },
-            {
               name: "⏭️  Saltar este comando",
               value: "skip"
             },
@@ -485,10 +502,6 @@ async function handleParallelCommandChoice(cmd, remainingCommands) {
             value: "parallel"
           },
           {
-            name: "🔄 Ejecutar en background (método anterior)",
-            value: "background"
-          },
-          {
             name: "⏭️  Saltar este comando",
             value: "skip"
           },
@@ -512,147 +525,334 @@ async function handleParallelCommandChoice(cmd, remainingCommands) {
 // Función para detectar comandos de larga duración que NO necesitan timeout automático
 function isLongRunningCommand(command) {
   const longRunningPatterns = [
-    /npm\s+run\s+dev/i,
-    /npm\s+run\s+start/i,
-    /npm\s+start/i,
-    /yarn\s+dev/i,
-    /yarn\s+start/i,
-    /ng\s+serve/i,
-    /node\s+.*server/i,
-    /nodemon/i,
-    /webpack.*serve/i,
-    /vite/i,
-    /next\s+dev/i,
-    /next\s+start/i,
-    /nuxt\s+dev/i,
-    /gatsby\s+develop/i,
-    /serve\s+-s/i,
-    /http-server/i,
-    /live-server/i,
-    /php\s+artisan\s+serve/i,
-    /rails\s+server/i,
-    /python.*manage\.py.*runserver/i,
-    /flask\s+run/i,
-    /uvicorn/i,
-    /gunicorn/i,
-    /streamlit\s+run/i,
-    /jupyter\s+notebook/i,
-    /jupyter\s+lab/i,
-    /cloudflared\s+tunnel/i,
-    /ngrok/i,
-    /.*\s+--watch/i,
-    /.*\s+watch/i,
-    /tail\s+-f/i,
-    /docker\s+run.*-d/i,
-    /pm2\s+start/i,
-    /forever\s+start/i
+    /\bnpm\s+run\s+dev\b/i,
+    /\bnpm\s+run\s+start\b/i,
+    /\bnpm\s+start\b/i,
+    /\byarn\s+dev\b/i,
+    /\byarn\s+start\b/i,
+    /\bpnpm\s+run\s+dev\b/i,
+    /\bbun\s+run\b/i,
+    /\bdeno\s+run\b/i,
+    /\bng\s+serve\b/i,
+    /\bnode\b.*\bserver\b/i,
+    /\bnodemon\b/i,
+    /\bwebpack.*serve\b/i,
+    /\bvite\b/i,
+    /\bnext\s+(dev|start)\b/i,
+    /\bnuxt\s+dev\b/i,
+    /\bgatsby\s+develop\b/i,
+    /\bserve\s+-s\b/i,
+    /\bhttp-server\b/i,
+    /\blive-server\b/i,
+    /\bphp\s+artisan\s+serve\b/i,
+    /\brails\s+server\b/i,
+    /\bpython\b.*\bmanage\.py\b.*\brunserver\b/i,
+    /\bflask\s+run\b/i,
+    /\buvicorn\b/i,
+    /\bgunicorn\b/i,
+    /\bstreamlit\s+run\b/i,
+    /\bjupyter\s+(notebook|lab)\b/i,
+    /\bcloudflared\s+tunnel\b/i,
+    /\bngrok\b/i,
+    /\bdocker(-compose|\s+compose)?\b.*\bup\b/i,
+    /--watch\b/i,
+    /\btail\s+-f\b/i,
+    /\bpm2\s+start\b/i,
+    /\bforever\s+start\b/i
   ];
   
   return longRunningPatterns.some(pattern => pattern.test(command));
 }
 
-// Función para detectar patrones de "servidor listo" según el tipo de comando
-function getReadyPatterns(command) {
-  const cmd = command.toLowerCase();
+// Función para validar éxito de comando por estado del proceso remoto
+async function validateCommandByProcessState(conn, command, stream, options = {}) {
+  const {
+    timeoutSeconds = 30,
+    checkInterval = 5000,
+    enableProcessCheck = true,
+    enablePortCheck = true
+  } = options;
   
-  // Patrones de Angular CLI (ng serve)
-  if (cmd.includes('ng serve') || cmd.includes('ng s')) {
-    return [
-      /webpack compiled successfully/i,
-      /compiled successfully/i,
-      /live development server is listening/i,
-      /angular live development server is listening/i,
-      /local:.*http.*:\d+/i,
-      /on:.*http.*:\d+/i,
-      /✔ compiled successfully/i
+  return new Promise((resolve) => {
+    let hasOutput = false;
+    let hasCriticalError = false;
+    let commandPid = null;
+    
+    // Patrones de errores críticos que indican fallo inmediato
+    const criticalErrorPatterns = [
+      /command not found/i,
+      /permission denied/i,
+      /no such file or directory/i,
+      /connection refused/i,
+      /address already in use/i,
+      /port.*already.*use/i,
+      /failed to start/i,
+      /error.*starting/i,
+      /cannot.*bind/i,
+      /fatal error/i,
+      /segmentation fault/i,
+      /killed/i,
+      /syntax error/i,
+      /module not found/i,
+      /cannot find module/i
     ];
-  }
+    
+    // 1. VALIDACIÓN PRINCIPAL: Por duración sin errores críticos
+    const durationTimer = setTimeout(async () => {
+      if (!hasCriticalError) {  
+        // Ejecutar validaciones de estado del proceso
+        const stateValidation = await validateProcessState(conn, command, commandPid);
+        
+        resolve({
+          success: true,
+          method: 'process_state_validation',
+          duration: timeoutSeconds,
+          stateValidation,
+          reason: 'running_without_critical_errors',
+          processInfo: stateValidation
+        });
+      }
+    }, timeoutSeconds * 1000);
+    
+    // 2. DETECCIÓN DE ERRORES CRÍTICOS
+    stream.on('data', (data) => {
+      const text = data.toString();
+      hasOutput = true;
+      
+      // Extraer PID si es posible del output
+      const pidMatch = text.match(/pid[:\s]+(\d+)/i) || text.match(/process[:\s]+(\d+)/i);
+      if (pidMatch && !commandPid) {
+        commandPid = pidMatch[1];
+      }
+      
+      // Verificar errores críticos
+      const hasCritical = criticalErrorPatterns.some(pattern => pattern.test(text));
+      if (hasCritical) {
+        hasCriticalError = true;
+        clearTimeout(durationTimer);
+        
+        resolve({
+          success: false,
+          method: 'critical_error_detected',
+          error: text.trim(),
+          reason: 'critical_error_in_output'
+        });
+        return;
+      }
+    });
+    
+    // 3. MANEJO DE CIERRE TEMPRANO DEL PROCESO
+    stream.on('close', (code) => {
+      clearTimeout(durationTimer);
+      
+      // Si el comando termina rápidamente
+      if (code === 0) {
+        resolve({
+          success: true,
+          method: 'normal_completion',
+          exitCode: code,
+          reason: 'completed_successfully'
+        });
+      } else {
+        resolve({
+          success: false,
+          method: 'exit_with_error',
+          exitCode: code,
+          reason: 'process_exited_with_error'
+        });
+      }
+    });
+    
+    // 4. DETECCIÓN DE ERRORES EN STDERR
+    stream.stderr.on('data', (data) => {
+      const text = data.toString();
+      
+      // Verificar errores críticos en stderr
+      const hasCritical = criticalErrorPatterns.some(pattern => pattern.test(text));
+      if (hasCritical) {
+        hasCriticalError = true;
+        clearTimeout(durationTimer);
+        
+        resolve({
+          success: false,
+          method: 'critical_error_stderr',
+          error: text.trim(),
+          reason: 'critical_error_in_stderr'
+        });
+      }
+    });
+  });
+}
+
+// Función para validar el estado del proceso en el sistema remoto
+async function validateProcessState(conn, originalCommand, knownPid = null) {
+  const checks = [];
   
-  // Patrones de npm/yarn dev
-  if (cmd.includes('npm run dev') || cmd.includes('yarn dev') || cmd.includes('npm start')) {
-    return [
-      /compiled successfully/i,
-      /webpack compiled/i,
-      /ready.*http/i,
-      /server.*running.*on/i,
-      /local:.*http.*:\d+/i,
-      /listening.*on.*port/i,
-      /dev server running/i,
-      /application.*started/i,
-      /ready.*on.*http/i,
-      /✔.*ready/i,
-      /hot.*reload.*enabled/i
-    ];
+  try {
+    // 1. Verificar procesos por nombre del comando
+    const processCheck = await checkProcessByCommand(conn, originalCommand);
+    checks.push({ type: 'process_by_command', ...processCheck });
+    
+    // 2. Verificar proceso específico por PID si se conoce
+    if (knownPid) {
+      const pidCheck = await checkProcessByPid(conn, knownPid);
+      checks.push({ type: 'process_by_pid', pid: knownPid, ...pidCheck });
+    }
+    
+    // 3. Verificar puerto si es aplicable
+    const port = extractPortFromCommand(originalCommand);
+    if (port) {
+      const portCheck = await checkPortStatus(conn, port);
+      checks.push({ type: 'port_status', port, ...portCheck });
+    }
+    
+    // 4. Verificar carga del sistema
+    const systemCheck = await checkSystemLoad(conn);
+    checks.push({ type: 'system_load', ...systemCheck });
+    
+    // 5. Análisis final del estado
+    const overallSuccess = checks.some(check => 
+      (check.type === 'process_by_command' && check.success) ||
+      (check.type === 'process_by_pid' && check.success) ||
+      (check.type === 'port_status' && check.success)
+    );
+    
+    return {
+      overall_success: overallSuccess,
+      checks,
+      summary: overallSuccess ? 
+        'Proceso validado como ejecutándose correctamente' : 
+        'No se pudo validar el estado del proceso'
+    };
+    
+  } catch (error) {
+    return {
+      overall_success: false,
+      checks: [{ type: 'validation_error', error: error.message }],
+      summary: 'Error durante la validación del estado'
+    };
   }
-  
-  // Patrones de Next.js
-  if (cmd.includes('next dev') || cmd.includes('next start')) {
-    return [
-      /ready.*on.*http/i,
-      /ready.*started server/i,
-      /compiled.*successfully/i,
-      /ready in \d+ms/i,
-      /local:.*http.*:\d+/i
-    ];
-  }
-  
-  // Patrones de Vite
-  if (cmd.includes('vite')) {
-    return [
-      /local:.*http.*:\d+/i,
-      /ready in \d+ms/i,
-      /dev server running/i,
-      /vite.*ready/i
-    ];
-  }
-  
-  // Patrones de Cloudflared
-  if (cmd.includes('cloudflared tunnel')) {
-    return [
-      /connection.*registered/i,
-      /tunnel.*registered/i,
-      /serving at/i,
-      /https:\/\/.*\.trycloudflare\.com/i,
-      /your quick tunnel is/i,
-      /tunnel.*connected/i,
-      /cloudflared.*ready/i
-    ];
-  }
-  
-  // Patrones de servidores Python
-  if (cmd.includes('python') && (cmd.includes('runserver') || cmd.includes('flask') || cmd.includes('uvicorn'))) {
-    return [
-      /development server is running/i,
-      /running on.*http/i,
-      /serving at.*http/i,
-      /started server process/i,
-      /application startup complete/i,
-      /uvicorn.*running/i
-    ];
-  }
-  
-  // Patrones de Node.js
-  if (cmd.includes('node') && cmd.includes('server')) {
-    return [
-      /server.*listening.*on/i,
-      /app.*listening.*on/i,
-      /started.*on.*port/i,
-      /server.*running.*on/i,
-      /listening.*port/i
-    ];
-  }
-  
-  // Patrones generales para otros servidores
-  return [
-    /server.*running/i,
-    /listening.*on/i,
-    /ready.*on/i,
-    /started.*on/i,
-    /serving.*on/i,
-    /development.*server/i,
-    /compiled.*successfully/i,
-    /ready/i
-  ];
+}
+
+// Función para verificar proceso por nombre del comando
+async function checkProcessByCommand(conn, command) {
+  return new Promise((resolve) => {
+    const processName = extractProcessName(command);
+    const checkCmd = `ps aux | grep "${processName}" | grep -v grep | head -5`;
+    
+    conn.exec(checkCmd, (err, stream) => {
+      if (err) {
+        resolve({ success: false, reason: 'check_failed', error: err.message });
+        return;
+      }
+      
+      let output = '';
+      stream.on('data', (data) => {
+        output += data.toString();
+      });
+      
+      stream.on('close', (code) => {
+        const processLines = output.trim().split('\n').filter(line => line.trim());
+        const processCount = processLines.length;
+        
+        resolve({
+          success: processCount > 0,
+          reason: processCount > 0 ? 'process_found' : 'process_not_found',
+          processCount,
+          processInfo: processLines,
+          command: checkCmd
+        });
+      });
+    });
+  });
+}
+
+// Función para verificar proceso por PID específico
+async function checkProcessByPid(conn, pid) {
+  return new Promise((resolve) => {
+    const checkCmd = `ps -p ${pid} -o pid,ppid,cmd --no-headers`;
+    
+    conn.exec(checkCmd, (err, stream) => {
+      if (err) {
+        resolve({ success: false, reason: 'pid_check_failed', error: err.message });
+        return;
+      }
+      
+      let output = '';
+      stream.on('data', (data) => {
+        output += data.toString();
+      });
+      
+      stream.on('close', (code) => {
+        const processExists = output.trim().length > 0 && code === 0;
+        resolve({
+          success: processExists,
+          reason: processExists ? 'pid_exists' : 'pid_not_found',
+          processInfo: output.trim(),
+          exitCode: code
+        });
+      });
+    });
+  });
+}
+
+// Función para verificar estado del puerto
+async function checkPortStatus(conn, port) {
+  return new Promise((resolve) => {
+    const checkCmd = `netstat -tlnp 2>/dev/null | grep :${port} || ss -tlnp 2>/dev/null | grep :${port}`;
+    
+    conn.exec(checkCmd, (err, stream) => {
+      if (err) {
+        resolve({ success: false, reason: 'port_check_failed', error: err.message });
+        return;
+      }
+      
+      let output = '';
+      stream.on('data', (data) => {
+        output += data.toString();
+      });
+      
+      stream.on('close', (code) => {
+        const portActive = output.includes(`:${port}`) && output.includes('LISTEN');
+        resolve({
+          success: portActive,
+          reason: portActive ? 'port_listening' : 'port_not_active',
+          portInfo: output.trim(),
+          command: checkCmd
+        });
+      });
+    });
+  });
+}
+
+// Función para verificar carga del sistema
+async function checkSystemLoad(conn) {
+  return new Promise((resolve) => {
+    conn.exec('uptime && free -h | head -2', (err, stream) => {
+      if (err) {
+        resolve({ success: false, error: err.message });
+        return;
+      }
+      
+      let output = '';
+      stream.on('data', (data) => {
+        output += data.toString();
+      });
+      
+      stream.on('close', () => {
+        const lines = output.split('\n');
+        const uptimeLine = lines.find(line => line.includes('load average'));
+        const memLine = lines.find(line => line.includes('Mem:'));
+        
+        resolve({
+          success: true,
+          uptime: uptimeLine ? uptimeLine.trim() : 'N/A',
+          memory: memLine ? memLine.trim() : 'N/A',
+          raw: output.trim()
+        });
+      });
+    });
+  });
 }
 
 // Función para crear una nueva conexión SSH paralela
@@ -691,36 +891,97 @@ async function createParallelConnection(originalConfig) {
   });
 }
 
+// Función para extraer nombre del proceso del comando
+function extractProcessName(command) {
+  const cmd = command.toLowerCase().trim();
+  
+  // Extraer el nombre del ejecutable principal
+  if (cmd.includes('npm ')) return 'node';
+  if (cmd.includes('yarn ')) return 'node';
+  if (cmd.includes('pnpm ')) return 'node';
+  if (cmd.includes('bun ')) return 'bun';
+  if (cmd.includes('deno ')) return 'deno';
+  if (cmd.includes('ng ')) return 'node';
+  if (cmd.includes('next ')) return 'node';
+  if (cmd.includes('nuxt ')) return 'node';
+  if (cmd.includes('vite')) return 'node';
+  if (cmd.includes('cloudflared')) return 'cloudflared';
+  if (cmd.includes('ngrok')) return 'ngrok';
+  if (cmd.includes('python')) return 'python';
+  if (cmd.includes('php')) return 'php';
+  if (cmd.includes('java')) return 'java';
+  if (cmd.includes('ruby')) return 'ruby';
+  if (cmd.includes('rails')) return 'ruby';
+  if (cmd.includes('flask')) return 'python';
+  if (cmd.includes('uvicorn')) return 'python';
+  if (cmd.includes('gunicorn')) return 'python';
+  if (cmd.includes('streamlit')) return 'python';
+  if (cmd.includes('jupyter')) return 'python';
+  if (cmd.includes('docker')) return 'docker';
+  if (cmd.includes('pm2')) return 'pm2';
+  if (cmd.includes('forever')) return 'forever';
+  
+  // Extraer primera palabra del comando
+  const words = cmd.split(' ');
+  return words[0];
+}
+
+// Función para extraer puerto del comando
+function extractPortFromCommand(command) {
+  const portPatterns = [
+    /--port[=\s]+(\d+)/i,
+    /-p[=\s]+(\d+)/i,
+    /port[=\s]+(\d+)/i,
+    /:(\d+)/,
+    /localhost:(\d+)/i,
+    /127\.0\.0\.1:(\d+)/i,
+    /0\.0\.0\.0:(\d+)/i
+  ];
+  
+  for (const pattern of portPatterns) {
+    const match = command.match(pattern);
+    if (match && match[1]) {
+      const port = parseInt(match[1]);
+      if (port > 0 && port < 65536) {
+        return port;
+      }
+    }
+  }
+  
+  // Puertos por defecto según el comando
+  const cmd = command.toLowerCase();
+  if (cmd.includes('ng serve')) return 4200;
+  if (cmd.includes('npm run dev') || cmd.includes('yarn dev') || cmd.includes('pnpm run dev')) return 3000;
+  if (cmd.includes('next dev') || cmd.includes('next start')) return 3000;
+  if (cmd.includes('nuxt dev')) return 3000;
+  if (cmd.includes('vite')) return 5173;
+  if (cmd.includes('gatsby develop')) return 8000;
+  if (cmd.includes('flask')) return 5000;
+  if (cmd.includes('django') || cmd.includes('runserver')) return 8000;
+  if (cmd.includes('rails server')) return 3000;
+  if (cmd.includes('php artisan serve')) return 8000;
+  if (cmd.includes('http-server')) return 8080;
+  if (cmd.includes('live-server')) return 8080;
+  if (cmd.includes('serve -s')) return 3000;
+  if (cmd.includes('streamlit')) return 8501;
+  if (cmd.includes('jupyter')) return 8888;
+  
+  return null;
+}
+
 // Función para ejecutar comando y esperar a que esté "listo"
 async function executeAndWaitForReady(conn, fullCommand, cmd, logStream, connectionConfig) {
   return new Promise((resolve) => {
-    const readyPatterns = getReadyPatterns(cmd);
-    let isReady = false;
-    let output = "";
-    let readyCheckTimeout;
-    
-    // Crear loader para mostrar progreso
     const loader = createLoader(`Ejecutando: ${cmd}`);
-    loader.update(`Esperando que el servidor esté listo: ${cmd}`);
-    
-    // Timeout de seguridad - si no detecta "ready" en 60 segundos, continúa
-    readyCheckTimeout = setTimeout(() => {
-      if (!isReady) {
-        loader.stop(`⏰ Timeout alcanzado - Asumiendo servidor listo: ${cmd}`);
-        isReady = true;
-        resolve({ success: true, ready: true, output, timeout: true });
-      }
-    }, 60000); // 60 segundos
     
     conn.exec(fullCommand, { pty: true }, (err, stream) => {
       if (err) {
-        clearTimeout(readyCheckTimeout);
         loader.stop(`❌ Error ejecutando: ${cmd}`);
-        resolve({ success: false, error: err, output });
+        resolve({ success: false, error: err, method: 'exec_error' });
         return;
       }
       
-      // Crear manejador de contraseña (sin timeout para comandos de larga duración)
+      // Crear manejador de contraseña
       const passwordHandler = createPasswordTimeoutHandler(
         stream, 
         connectionConfig.password, 
@@ -728,82 +989,51 @@ async function executeAndWaitForReady(conn, fullCommand, cmd, logStream, connect
         logStream
       );
       
-      stream
-        .on("close", (code) => {
-          clearTimeout(readyCheckTimeout);
-          passwordHandler.cancel();
-          
-          if (!isReady) {
-            // Si el proceso terminó antes de estar "listo", es probablemente un error
-            loader.stop(`❌ Proceso terminó prematuramente: ${cmd}`);
-            resolve({ success: false, exitCode: code, output, prematureExit: true });
-          }
-        })
-        .on("data", (data) => {
-          const text = data.toString();
-          output += text;
-          
-          // No mostrar output en tiempo real, solo escribir al log
-          logStream.write(text);
-          
-          // Verificar patrones de contraseña si aún no ha respondido
-          if (!passwordHandler.isResponded()) {
-            const analysis = analyzeStreamOutput(data, cmd);
-            if (analysis.isSudoPrompt || analysis.isPasswordPrompt) {
-              if (analysis.confidence >= 75) {
-                passwordHandler.triggerPasswordSend(`Detectado prompt - `);
-                return;
-              }
+      // Usar la nueva validación por estado del proceso
+      validateCommandByProcessState(conn, cmd, stream, {
+        timeoutSeconds: 30,
+        enableProcessCheck: true,
+        enablePortCheck: true
+      }).then((result) => {
+        loader.stop(result.success ? 
+          `✅ ${result.reason} (${result.method})` : 
+          `❌ ${result.reason} (${result.method})`
+        );
+        
+        passwordHandler.cancel();
+        
+        // Escribir solo un mensaje conciso al log
+        logStream.write(`\n[VALIDACIÓN] ${cmd}: ${result.success ? 'ÉXITO' : 'FALLO'} - ${result.reason}\n`);
+        
+        resolve(result);
+      });
+      
+      // Manejar autenticación
+      stream.on("data", (data) => {
+        logStream.write(data);
+        
+        if (!passwordHandler.isResponded()) {
+          const analysis = analyzeStreamOutput(data, cmd);
+          if (analysis.isSudoPrompt || analysis.isPasswordPrompt) {
+            if (analysis.confidence >= 75) {
+              passwordHandler.triggerPasswordSend(`Detectado prompt - `);
             }
           }
-          
-          // Verificar si el servidor está listo
-          if (!isReady) {
-            for (const pattern of readyPatterns) {
-              if (pattern.test(text)) {
-                isReady = true;
-                clearTimeout(readyCheckTimeout);
-                loader.stop(`✅ Servidor listo: ${cmd}`);
-                
-                resolve({ success: true, ready: true, output, pattern: pattern.toString() });
-                return;
-              }
+        }
+      });
+      
+      stream.stderr.on("data", (data) => {
+        logStream.write(`[STDERR] ${data}`);
+        
+        if (!passwordHandler.isResponded()) {
+          const analysis = analyzeStreamOutput(data, cmd);
+          if (analysis.isSudoPrompt || analysis.isPasswordPrompt) {
+            if (analysis.confidence >= 75) {
+              passwordHandler.triggerPasswordSend(`Detectado prompt en stderr - `);
             }
           }
-        })
-        .stderr.on("data", (data) => {
-          const text = data.toString();
-          output += `[STDERR] ${text}`;
-          
-          // No mostrar stderr en tiempo real, solo escribir al log
-          logStream.write(`[STDERR] ${text}`);
-          
-          // Verificar contraseñas en stderr también
-          if (!passwordHandler.isResponded()) {
-            const analysis = analyzeStreamOutput(data, cmd);
-            if (analysis.isSudoPrompt || analysis.isPasswordPrompt) {
-              if (analysis.confidence >= 75) {
-                passwordHandler.triggerPasswordSend(`Detectado prompt en stderr - `);
-                return;
-              }
-            }
-          }
-          
-          // Verificar patrones de "ready" en stderr también
-          if (!isReady) {
-            for (const pattern of readyPatterns) {
-              if (pattern.test(text)) {
-                isReady = true;
-                clearTimeout(readyCheckTimeout);
-                console.log(`\n✅ ¡Servidor detectado como LISTO! Patrón encontrado en stderr: ${pattern}`);
-                console.log(`🔗 Creando nueva conexión SSH para continuar...`);
-                
-                resolve({ success: true, ready: true, output, pattern: pattern.toString() });
-                return;
-              }
-            }
-          }
-        });
+        }
+      });
     });
   });
 }
@@ -814,7 +1044,6 @@ async function executeRemainingCommands(parallelConn, remainingCommands, current
   let parallelDirectory = currentDirectory;
   
   // Mostrar información inicial sin logs detallados
-  console.log(`\n🔗 Ejecutando ${remainingCommands.length} comando(s) restantes en conexión paralela...`);
   
   for (let i = 0; i < remainingCommands.length; i++) {
     const cmd = remainingCommands[i];
@@ -841,37 +1070,49 @@ async function executeRemainingCommands(parallelConn, remainingCommands, current
     
     // Verificar si este comando también es de larga duración
     if (isLongRunningCommand(cmd)) {
-      loader.update(`Comando de larga duración detectado: ${cmd}`);
+      loader.stop(); // Detener el loader actual
       
-      try {
-        // Crear otra conexión paralela para este comando
-        loader.update(`Creando conexión paralela para: ${cmd}`);
-        const nestedParallelConn = await createParallelConnection(connectionConfig);
+      // Calcular comandos restantes desde este punto
+      const nestedRemainingCommands = remainingCommands.slice(i + 1);
+      
+      // Usar la misma función de selección que el flujo principal
+      const longRunningAction = await handleParallelCommandChoice(cmd, nestedRemainingCommands);
+      
+      if (longRunningAction === "parallel") {
+        // Limpiar pantalla para eliminar el ruido de la selección de opciones
+        console.clear();
+        console.log(`✅ Conexión paralela activa`);
+        console.log(`📝 Ejecutando comandos restantes...\n`);
         
-        // Ejecutar este comando en su propia conexión
-        loader.update(`Esperando que el servidor esté listo: ${cmd}`);
+        // Mostrar progreso de los comandos restantes
+        remainingCommands.forEach((c, idx) => {
+          const status = idx < i ? '✅' : idx === i ? '⏳' : '⏳';
+          console.log(`  ${status} ${idx + 1}. ${c}`);
+        });
+        
+        console.log(""); // Línea en blanco antes del loader
+        
         const nestedResult = await executeAndWaitForReady(
-          nestedParallelConn, 
+          parallelConn, 
           fullCommand, 
           cmd, 
           logStream, 
           connectionConfig
         );
         
-        if (nestedResult.success && nestedResult.ready) {
+        if (nestedResult.success) {
           taskStatuses[globalIndex] = '🔗';
           completed++;
           
           executionLog.push({
             command: cmd,
             status: '🔗',
-            output: `Ejecutándose en conexión paralela. Patrón: ${nestedResult.pattern || 'timeout'}`,
+            output: `Ejecutándose en conexión paralela. Método: ${nestedResult.method}`,
             exitCode: 0,
             parallel: true,
-            nested: true
+            nested: true,
+            validationInfo: nestedResult.stateValidation
           });
-          
-          loader.stop(`✅ Servidor listo: ${cmd}`);
           
           // Si hay más comandos, continuarlos en la conexión original
           const moreCommands = remainingCommands.slice(i + 1);
@@ -889,31 +1130,37 @@ async function executeRemainingCommands(parallelConn, remainingCommands, current
             completed += moreResult.completed;
           }
           
-          // La conexión anidada sigue corriendo, no la cerramos
+          // Salir del bucle ya que los comandos restantes se procesaron recursivamente
+          break;
           
         } else {
           taskStatuses[globalIndex] = '❌';
           executionLog.push({
             command: cmd,
             status: '❌',
-            output: `Error en comando anidado: ${nestedResult.error || 'falló al iniciar'}`,
-            exitCode: 1
+            output: `Error en comando anidado: ${nestedResult.reason} (${nestedResult.method})`,
+            exitCode: 1,
+            validationInfo: nestedResult.stateValidation
           });
-          
-          loader.stop(`❌ Error en: ${cmd}`);
-          nestedParallelConn.end();
         }
         
-        // Salir del bucle ya que los comandos restantes se procesaron recursivamente
-        break;
+      } else if (longRunningAction === "skip") {
+        // Saltar este comando
+        taskStatuses[globalIndex] = '⏭️';
         
-      } catch (nestedError) {
-        loader.stop(`❌ Error creando conexión: ${cmd}`);
+        executionLog.push({
+          command: cmd,
+          status: '⏭️',
+          output: 'Comando saltado por el usuario',
+          exitCode: 0,
+          parallel: true
+        });
         
-        // Continuar con enfoque normal en la conexión actual
-        const normalResult = await executeNormalCommand(parallelConn, fullCommand, cmd, logStream, connectionConfig);
+      } else {
+        // Para otras opciones (debug, wait), ejecutar normalmente
+        const result = await executeNormalCommand(parallelConn, fullCommand, cmd, logStream, connectionConfig);
         
-        if (normalResult.success) {
+        if (result.success) {
           taskStatuses[globalIndex] = '✅';
           completed++;
         } else {
@@ -922,9 +1169,10 @@ async function executeRemainingCommands(parallelConn, remainingCommands, current
         
         executionLog.push({
           command: cmd,
-          status: normalResult.success ? '✅' : '❌',
-          output: normalResult.output,
-          exitCode: normalResult.exitCode
+          status: result.success ? '✅' : '❌',
+          output: result.output,
+          exitCode: result.exitCode,
+          parallel: true
         });
       }
       
@@ -1033,7 +1281,7 @@ function createPasswordTimeoutHandler(stream, password, commandName, logStream) 
   
   const sendPassword = (reason = "") => {
     if (!responded) {
-      console.log(`🔐 ${reason}Enviando contraseña automáticamente para: ${commandName}`);
+      // Solo escribir al log, sin mostrar en consola para mantener interfaz limpia
       stream.write(password + "\n");
       logStream.write(`[AUTO-RESPONSE] Contraseña enviada automáticamente${reason ? ` (${reason})` : ""}\n`);
       responded = true;
@@ -1042,8 +1290,6 @@ function createPasswordTimeoutHandler(stream, password, commandName, logStream) 
   
   // Verificar si es un comando de larga duración que no necesita timeout automático
   if (isLongRunningCommand(commandName)) {
-    console.log(`⏱️  Comando de larga duración detectado: ${commandName}`);
-    console.log(`🔐 Timeout automático de contraseña DESHABILITADO`);
     // No establecer timeout para comandos de desarrollo/servidores
     timeoutId = null;
   } else {
@@ -1367,10 +1613,9 @@ async function debugMode(conn, connectionConfig, executionLog, commandList, curr
               if (!passwordHandler.isResponded()) {
                 const analysis = analyzeStreamOutput(data, command);
                 
-                // Manejar solicitudes de contraseña con análisis avanzado
+                // Manejar solicitudes de contraseña de forma silenciosa
                 if (analysis.isSudoPrompt || analysis.isPasswordPrompt) {
                   if (analysis.confidence >= 75) {
-                    console.log(`\n🔐 [DEBUG MODE] Detectado prompt de contraseña (confianza: ${analysis.confidence}%)`);
                     passwordHandler.triggerPasswordSend(`Detectado prompt - `);
                     return; // No mostrar el prompt de contraseña en pantalla
                   }
@@ -1379,7 +1624,6 @@ async function debugMode(conn, connectionConfig, executionLog, commandList, curr
                 // Verificar con patrones específicos del comando
                 for (const { pattern, confidence } of specificPatterns) {
                   if (pattern.test(text) && confidence >= 70) {
-                    console.log(`\n🔐 [DEBUG MODE] Detectado patrón específico de contraseña (${confidence}%)`);
                     passwordHandler.triggerPasswordSend(`Patrón específico detectado - `);
                     return; // No mostrar el prompt de contraseña en pantalla
                   }
@@ -1389,7 +1633,6 @@ async function debugMode(conn, connectionConfig, executionLog, commandList, curr
                 if (text.includes(':') && 
                     text.trim().endsWith(':') &&
                     text.toLowerCase().includes('password')) {
-                  console.log(`\n🔐 [DEBUG MODE] Detectado formato típico de prompt de contraseña`);
                   passwordHandler.triggerPasswordSend("Formato típico de prompt detectado - ");
                   return; // No mostrar el prompt de contraseña en pantalla
                 }
@@ -1407,16 +1650,14 @@ async function debugMode(conn, connectionConfig, executionLog, commandList, curr
                 
                 if (analysis.isSudoPrompt || analysis.isPasswordPrompt) {
                   if (analysis.confidence >= 75) {
-                    console.log(`\n🔐 [DEBUG MODE] Detectado prompt en stderr (confianza: ${analysis.confidence}%)`);
                     passwordHandler.triggerPasswordSend(`Detectado prompt en stderr - `);
                     return; // No mostrar el prompt de contraseña en pantalla
                   }
                 }
                 
-                // Verificar patrones específicos en stderr
+                // Verificar patrones específicos en stderr de forma silenciosa
                 for (const { pattern, confidence } of specificPatterns) {
                   if (pattern.test(text) && confidence >= 70) {
-                    console.log(`\n🔐 [DEBUG MODE] Detectado patrón específico en stderr (${confidence}%)`);
                     passwordHandler.triggerPasswordSend(`Patrón específico en stderr - `);
                     return; // No mostrar el prompt de contraseña en pantalla
                   }
@@ -1908,8 +2149,8 @@ async function runSshProcess(processConfig = null) {
     return new Promise((resolve) => {
       conn
         .on("ready", async () => {
-          console.log(`\n✅ Conectado a ${connectionConfig.host}`);
-          console.log(`📝 Ejecutando ${commandList.length} tarea(s)...\n`);
+          // Mostrar información inicial sin ruido
+          displayTaskProgress(connectionConfig.host, commandList.length, commandList, taskStatuses);
           
           // Agregar comando cd al inicio para ir a la raíz
           const allCommands = ["cd ~", ...commandList];
@@ -1922,18 +2163,8 @@ async function runSshProcess(processConfig = null) {
               const cmd = commandList[i];
               const commandName = cmd; // Usar comando completo
               
-              // Mostrar estado actual
-              console.clear();
-              console.log(`✅ Conectado a ${connectionConfig.host}`);
-              console.log(`📝 Ejecutando ${commandList.length} tarea(s)...\n`);
-              
-              // Mostrar progreso de todas las tareas
-              commandList.forEach((c, idx) => {
-                const status = idx < i ? (taskStatuses[idx] || '✅') : idx === i ? '⏳' : '⏳';
-                console.log(`  ${status} ${idx + 1}. ${c}`); // Mostrar comando completo
-              });
-              
-              console.log(`\n🔄 Ejecutando: ${commandName}...`); // Comando completo
+              // Mostrar estado actual de forma limpia
+              displayTaskProgress(connectionConfig.host, commandList.length, commandList, taskStatuses, i);
               
               // Preparar el comando con contexto de directorio
               let fullCommand;
@@ -1966,7 +2197,13 @@ async function runSshProcess(processConfig = null) {
 
                 if (longRunningAction === "parallel") {
                   // NUEVO ENFOQUE: Ejecutar y esperar a estar listo, luego crear conexión paralela
-                  console.log(`🚀 Ejecutando con detección de estado listo...`);
+                  // Limpiar pantalla para eliminar el ruido de la selección de opciones
+                  console.clear();
+                  console.log(`✅ Conectado a ${connectionConfig.host}`);
+                  console.log(`� Ejecutando ${commandList.length} tarea(s)...\n`);
+                  
+                  // Mostrar progreso usando función centralizada
+                  displayTaskProgress(connectionConfig.host, commandList.length, commandList, taskStatuses, i);
                   
                   const longRunningResult = await executeAndWaitForReady(
                     conn, 
@@ -1976,25 +2213,22 @@ async function runSshProcess(processConfig = null) {
                     connectionConfig
                   );
                   
-                  if (longRunningResult.success && longRunningResult.ready) {
+                  if (longRunningResult.success) {
                     taskStatuses[i] = '🔗'; // Indicador para "ejecutándose en paralelo"
                     completedTasks++;
                     
                     executionLog.push({
                       command: cmd,
                       status: '🔗',
-                      output: `Ejecutándose en paralelo. Patrón detectado: ${longRunningResult.pattern || 'timeout'}`,
+                      output: `Ejecutándose en paralelo. Método: ${longRunningResult.method}`,
                       exitCode: 0,
-                      parallel: true
+                      parallel: true,
+                      validationInfo: longRunningResult.stateValidation
                     });
-                    
-                    console.log(`\n🎉 Servidor listo! Continuando con comandos restantes en nueva conexión...`);
                     
                     // Si hay más comandos por ejecutar, crear conexión paralela
                     const remainingCommands = commandList.slice(i + 1);
                     if (remainingCommands.length > 0) {
-                      console.log(`📝 Comandos restantes: ${remainingCommands.length}`);
-                      
                       try {
                         // Crear nueva conexión SSH paralela
                         const parallelConn = await createParallelConnection(connectionConfig);
@@ -2029,14 +2263,14 @@ async function runSshProcess(processConfig = null) {
                     // Salir del bucle principal ya que los comandos restantes se ejecutaron en paralelo
                     break;
                     
-                  } else if (longRunningResult.prematureExit) {
+                  } else if (longRunningResult.method === 'exit_with_error') {
                     taskStatuses[i] = '❌';
-                    console.error(`❌ El servidor terminó prematuramente (posible error)`);
+                    console.error(`❌ El comando terminó con error (código: ${longRunningResult.exitCode})`);
                     
                     executionLog.push({
                       command: cmd,
                       status: '❌',
-                      output: longRunningResult.output,
+                      output: longRunningResult.error || 'Comando terminó con error',
                       exitCode: longRunningResult.exitCode
                     });
                     
@@ -2045,7 +2279,7 @@ async function runSshProcess(processConfig = null) {
                       {
                         type: "list",
                         name: "debugChoice",
-                        message: "El servidor no se inició correctamente. ¿Cómo proceder?",
+                        message: "El comando terminó con error. ¿Cómo proceder?",
                         choices: [
                           { name: "🔧 Entrar en modo debug", value: "debug" },
                           { name: "⏭️  Saltar y continuar", value: "skip" },
@@ -2068,107 +2302,48 @@ async function runSshProcess(processConfig = null) {
                     
                   } else {
                     taskStatuses[i] = '❌';
-                    console.error(`❌ Error ejecutando comando de larga duración: ${longRunningResult.error}`);
+                    console.error(`❌ Error ejecutando comando: ${longRunningResult.reason} (${longRunningResult.method})`);
                     
                     executionLog.push({
                       command: cmd,
                       status: '❌',
-                      output: longRunningResult.output || `Error: ${longRunningResult.error}`,
-                      exitCode: 1
+                      output: longRunningResult.error || `Error: ${longRunningResult.reason}`,
+                      exitCode: 1,
+                      validationInfo: longRunningResult.stateValidation
                     });
+                    
+                    // Ofrecer opciones de debug
+                    const { debugChoice } = await inquirer.prompt([
+                      {
+                        type: "list",
+                        name: "debugChoice",
+                        message: "El comando no se validó correctamente. ¿Cómo proceder?",
+                        choices: [
+                          { name: "🔧 Entrar en modo debug", value: "debug" },
+                          { name: "⏭️  Saltar y continuar", value: "skip" },
+                          { name: "🚪 Finalizar proceso", value: "terminate" }
+                        ]
+                      }
+                    ]);
+                    
+                    if (debugChoice === "debug") {
+                      const debugResult = await debugMode(conn, connectionConfig, executionLog, commandList, i);
+                      if (debugResult === "terminate_connection") {
+                        resolve({ terminated: true });
+                        return;
+                      }
+                    } else if (debugChoice === "terminate") {
+                      resolve({ terminated: true });
+                      return;
+                    }
+                    // Si skip, continúa con el siguiente comando
                   }
                   
                   continue; // Continuar con el siguiente comando (si no se creó conexión paralela)
                   
-                } else if (longRunningAction === "background") {
-                  // Método anterior (background con nohup)
-                  const sanitizedName = `${cmd.replace(/[^a-zA-Z0-9]/g, '_')}_output.log`;
-                  const backgroundCmd = `cd ${currentDirectory} && nohup ${cmd} > ${sanitizedName} 2>&1 &`;
-                  console.log(`🔄 Ejecutando en background: ${backgroundCmd}`);
-
-                  const backgroundResult = await new Promise((bgResolve) => {
-                    conn.exec(backgroundCmd, (err, stream) => {
-                      if (err) {
-                        bgResolve({ success: false, error: err });
-                        return;
-                      }
-
-                      let output = "";
-                      stream
-                        .on("close", (code) => {
-                          bgResolve({ success: code === 0, exitCode: code, output });
-                        })
-                        .on("data", (data) => {
-                          output += data.toString();
-                        });
-                    });
-                  });
-
-                  if (backgroundResult.success) {
-                    taskStatuses[i] = '🔄';
-                    completedTasks++;
-                    console.log(`✅ Comando ejecutado en background exitosamente`);
-
-                    // Intentar leer las últimas líneas del logfile remoto generado por nohup
-                    const readLogCmd = `cd ${currentDirectory} && if [ -f "${sanitizedName}" ]; then tail -n 500 "${sanitizedName}"; else echo "__NOFILE__"; fi`;
-                    const remoteLog = await new Promise((logResolve) => {
-                      conn.exec(readLogCmd, (err, stream) => {
-                        if (err) {
-                          logResolve({ success: false, error: err });
-                          return;
-                        }
-
-                        let out = "";
-                        stream
-                          .on('close', () => {
-                            logResolve({ success: true, output: out });
-                          })
-                          .on('data', (data) => {
-                            out += data.toString();
-                          })
-                          .stderr.on('data', (data) => {
-                            out += `[STDERR] ${data.toString()}`;
-                          });
-                      });
-                    });
-
-                    let backgroundLogOutput = '';
-                    if (!remoteLog.success) {
-                      backgroundLogOutput = `No se pudo leer el logfile remoto: ${remoteLog.error}`;
-                    } else if (remoteLog.output && remoteLog.output.trim() === '__NOFILE__') {
-                      backgroundLogOutput = `Log remoto no encontrado en ${currentDirectory}/${sanitizedName}`;
-                    } else {
-                      backgroundLogOutput = `Log remoto (${currentDirectory}/${sanitizedName}):\n${remoteLog.output}`;
-                    }
-
-                    // Escribir también en el logStream principal
-                    logStream.write(`\n=== BACKGROUND COMMAND: ${cmd} ===\n`);
-                    logStream.write(`REMOTE LOG PATH: ${currentDirectory}/${sanitizedName}\n`);
-                    logStream.write(backgroundLogOutput + "\n");
-
-                    executionLog.push({
-                      command: cmd,
-                      status: '🔄',
-                      output: `Ejecutado en background: ${backgroundCmd}\n${backgroundResult.output}\n\n${backgroundLogOutput}`,
-                      exitCode: backgroundResult.exitCode,
-                      remoteLogPath: `${currentDirectory}/${sanitizedName}`
-                    });
-                  } else {
-                    taskStatuses[i] = '❌';
-                    console.error(`❌ Error ejecutando en background: ${backgroundResult.error}`);
-
-                    executionLog.push({
-                      command: cmd,
-                      status: '❌',
-                      output: `Error en background: ${backgroundResult.error}`,
-                      exitCode: 1
-                    });
-                  }
-                  continue;
-                  
                 } else if (longRunningAction === "skip") {
                   taskStatuses[i] = '⏭️';
-                  console.log(`⏭️  Comando saltado: ${cmd}`);
+                  // Comando saltado - sin mostrar mensaje adicional para mantener interfaz limpia
                   
                   executionLog.push({
                     command: cmd,
@@ -2179,7 +2354,7 @@ async function runSshProcess(processConfig = null) {
                   continue;
                   
                 } else if (longRunningAction === "debug") {
-                  console.log(`🔧 Ejecutando comando y entrando en modo debug...`);
+                  // Entrar directamente en modo debug sin mostrar output del comando
                   
                   conn.exec(fullCommand, { pty: true }, (err, stream) => {
                     if (err) {
@@ -2187,19 +2362,13 @@ async function runSshProcess(processConfig = null) {
                       return;
                     }
                     
-                    let outputCount = 0;
-                    stream.on("data", (data) => {
-                      if (outputCount < 10) {
-                        process.stdout.write(data.toString());
-                        outputCount++;
-                      } else if (outputCount === 10) {
-                        console.log("\n🔧 Comando ejecutándose... entrando en modo debug");
-                        outputCount++;
-                      }
+                    // No mostrar output en tiempo real para mantener interfaz limpia
+                    stream.on("data", () => {
+                      // Silenciar output del comando durante debug
                     });
                   });
                   
-                  await new Promise(resolve => setTimeout(resolve, 2000));
+                  await new Promise(resolve => setTimeout(resolve, 1000));
                   
                   const debugResult = await debugMode(conn, connectionConfig, executionLog, commandList, i);
                   
@@ -2225,9 +2394,12 @@ async function runSshProcess(processConfig = null) {
               }
               
               const commandResult = await new Promise((cmdResolve) => {
+                // Crear loader para mostrar progreso
+                const loader = createLoader(`Ejecutando: ${cmd}`);
+                
                 conn.exec(fullCommand, { pty: true }, (err, stream) => {
                   if (err) {
-                    console.error(`❌ Error ejecutando ${commandName}:`, err);
+                    loader.stop(); // Detener loader antes de mostrar error
                     logStream.write(`ERROR en ${cmd}: ${err}\n`);
                     taskStatuses[i] = '❌';
                     
@@ -2259,6 +2431,7 @@ async function runSshProcess(processConfig = null) {
 
                   stream
                     .on("close", (code) => {
+                      loader.stop(); // Detener loader cuando termine el comando
                       passwordHandler.cancel(); // Cancelar timeout
                       
                       logStream.write(`\n=== COMANDO: ${cmd} ===\n`);
@@ -2339,10 +2512,13 @@ async function runSshProcess(processConfig = null) {
                 });
               });
               
-              // Si el comando falló, ofrecer modo debug
+              // Si el comando falló, ofrecer modo debug de forma limpia
               if (!commandResult.success) {
-                console.log(`\n⚠️  Error detectado en el comando: ${cmd}`);
+                // Limpiar pantalla y mostrar error de forma limpia
+                console.clear();
+                console.log(`❌ Error detectado en comando: ${cmd}`);
                 console.log(`🔧 Código de salida: ${commandResult.exitCode || 'desconocido'}`);
+                console.log("");
                 
                 const { debugChoice } = await inquirer.prompt([
                   {
@@ -2534,15 +2710,6 @@ async function runSshProcess(processConfig = null) {
       
       console.log(`  ${status} ${i + 1}. ${c}${statusDescription}`);
     });
-    
-    // Mostrar leyenda de estados
-    console.log(`\n📖 Leyenda de estados:`);
-    console.log(`  ✅ Completado exitosamente`);
-    console.log(`  🔗 Ejecutándose en conexión SSH paralela`);
-    console.log(`  🔄 Ejecutándose en background`);
-    console.log(`  🔧 Ejecutado en modo debug`);
-    console.log(`  ⏭️  Saltado por el usuario`);
-    console.log(`  ❌ Error en ejecución`);
   }
   
   // Añadir opción para ver logs de la sesión
@@ -2691,7 +2858,8 @@ function showHelp() {
     ║  • Registro detallado de todas las ejecuciones           
     ║  • Persistencia del contexto de directorio               
     ║  • 🆕 Conexiones SSH paralelas para comandos largos      
-    ║  • 🆕 Detección de patrones "servidor listo"             
+    ║  • 🆕 Validación por estado de proceso remoto            
+    ║  • 🆕 Detección inteligente sin dependencia de patrones  
     ║  • 🆕 Ejecución anidada de múltiples servidores          
     ║                                                          
     ╚═══════════════════════════════════════════════════════════════════════╝

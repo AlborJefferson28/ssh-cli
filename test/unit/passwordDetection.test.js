@@ -501,4 +501,124 @@ describe('🔐 Detección de Contraseñas y Prompts', function() {
       expect(mockLogStream.write.calledOnce).to.be.true;
     });
   });
+
+  describe('🤫 Interfaz Limpia - Manejo Silencioso', function() {
+    let consoleLogStub;
+
+    beforeEach(function() {
+      consoleLogStub = sinon.stub(console, 'log');
+    });
+
+    afterEach(function() {
+      consoleLogStub.restore();
+    });
+
+    const createSilentPasswordHandler = (stream, password, commandName, logStream) => {
+      let responded = false;
+      
+      const sendPassword = (reason = "") => {
+        if (!responded) {
+          // Solo escribir al log, sin mostrar en consola para mantener interfaz limpia
+          stream.write(password + "\n");
+          logStream.write(`[AUTO-RESPONSE] Contraseña enviada automáticamente${reason ? ` (${reason})` : ""}\n`);
+          responded = true;
+        }
+      };
+      
+      return {
+        triggerPasswordSend: sendPassword,
+        cancel: () => { responded = true; },
+        isResponded: () => responded
+      };
+    };
+
+    it('🤫 debe enviar contraseña sin mostrar mensaje en consola', function() {
+      // Arrange
+      const mockStream = { write: sinon.stub() };
+      const mockLogStream = { write: sinon.stub() };
+      const password = 'secret123';
+      const command = 'sudo systemctl restart nginx';
+
+      // Act
+      const handler = createSilentPasswordHandler(mockStream, password, command, mockLogStream);
+      handler.triggerPasswordSend('Detectado prompt sudo - ');
+
+      // Assert
+      expect(mockStream.write.calledWith('secret123\n')).to.be.true;
+      expect(mockLogStream.write.calledWith('[AUTO-RESPONSE] Contraseña enviada automáticamente (Detectado prompt sudo - )\n')).to.be.true;
+      
+      // Verificar que NO se muestra mensaje invasivo en consola
+      expect(consoleLogStub.notCalled).to.be.true;
+    });
+
+    it('📝 debe registrar acción solo en archivo de log', function() {
+      // Arrange
+      const mockStream = { write: sinon.stub() };
+      const mockLogStream = { write: sinon.stub() };
+      const password = 'mypassword';
+      const command = 'sudo apt update';
+
+      // Act
+      const handler = createSilentPasswordHandler(mockStream, password, command, mockLogStream);
+      handler.triggerPasswordSend('Patrón específico detectado - ');
+
+      // Assert
+      expect(mockLogStream.write.calledOnce).to.be.true;
+      expect(mockLogStream.write.args[0][0]).to.include('[AUTO-RESPONSE]');
+      expect(mockLogStream.write.args[0][0]).to.include('Patrón específico detectado');
+      
+      // Verificar que la consola permanece limpia
+      expect(consoleLogStub.notCalled).to.be.true;
+    });
+
+    it('🔇 debe mantener funcionalidad sin ruido visual', function() {
+      // Arrange
+      const mockStream = { write: sinon.stub() };
+      const mockLogStream = { write: sinon.stub() };
+      const password = 'testpass';
+      const command = 'mysql -u root -p';
+
+      // Act
+      const handler = createSilentPasswordHandler(mockStream, password, command, mockLogStream);
+      
+      // Simular detección múltiple
+      handler.triggerPasswordSend('Primera detección - ');
+      handler.triggerPasswordSend('Segunda detección - '); // No debe hacer nada
+
+      // Assert
+      expect(mockStream.write.calledOnce).to.be.true; // Solo una vez
+      expect(mockLogStream.write.calledOnce).to.be.true; // Solo un log
+      expect(handler.isResponded()).to.be.true;
+      
+      // Verificar que no hay output en consola
+      expect(consoleLogStub.notCalled).to.be.true;
+    });
+
+    it('🎯 debe preservar funcionalidad completa de detección', function() {
+      // Arrange
+      const mockStream = { write: sinon.stub() };
+      const mockLogStream = { write: sinon.stub() };
+      const password = 'complexpass123';
+      const command = 'sudo -k ls /root';
+
+      // Act
+      const handler = createSilentPasswordHandler(mockStream, password, command, mockLogStream);
+      
+      // Verificar estado inicial
+      expect(handler.isResponded()).to.be.false;
+      
+      // Ejecutar envío
+      handler.triggerPasswordSend('Timeout detectado - ');
+      
+      // Verificar estado final
+      expect(handler.isResponded()).to.be.true;
+
+      // Assert
+      expect(mockStream.write.calledWith('complexpass123\n')).to.be.true;
+      expect(mockLogStream.write.calledOnce).to.be.true;
+      
+      // Funcionalidad completa preservada, sin logs de consola
+      expect(consoleLogStub.notCalled).to.be.true;
+    });
+  });
 });
