@@ -1,10 +1,10 @@
 # SSH CLI - Remote Command Executor
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![Node.js](https://img.shields.io/badge/node.js-%3E%3D16.0.0-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con **modo interactivo completo** y detección automática de contraseñas sudo.
+Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con **conexiones paralelas inteligentes** y **interfaz ultra-limpia**.
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
@@ -14,25 +14,45 @@ Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con **m
 ║             |___  |___  |  _  |   | |___ | |___| |           ║
 ║             |_____|_____|_| |_|   |_____||_____|_|           ║
 ║                                                              ║
-║             🚀 SSH Remote Command Executor v1.1.1            ║
+║             🚀 SSH Remote Command Executor v1.2.0            ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-## 🚀 Características
+## ✨ Nuevas Características v1.2.0
+
+### 🔗 **Conexiones SSH Paralelas Inteligentes**
+- **Detección automática** de comandos de larga duración (servidores, dev tools)
+- **Validación por estado del proceso** en lugar de patrones de texto
+- **Conexiones paralelas** para ejecutar comandos restantes mientras servidores están activos
+- **Manejo anidado** de múltiples servidores en paralelo
+
+### 🎨 **Interfaz Ultra-Limpia**
+- **Eliminación de mensajes invasivos** durante ejecución
+- **Progreso visual consistente** con loaders animados
+- **Estados de tarea claros**: ✅ Completado, ⏳ Ejecutando, � En paralelo, ❌ Error
+- **Logging silencioso** de contraseñas y operaciones técnicas
+
+### 🎯 **Validación Avanzada por Estado**
+- **Análisis del proceso remoto** para validar éxito de comandos
+- **Detección de puertos activos** para servidores web
+- **Patrones de error crítico** para fallos inmediatos
+- **Timeouts inteligentes** adaptados al tipo de comando
+
+## �🚀 Características Principales
 
 - **🌐 Flujo de Configuración Inteligente**: Detección automática de hosts existentes con valores por defecto contextuales
 - **🖱️ Modo Interactivo Completo**: Navegación intuitiva con menús visuales usando inquirer.js
 - **🏠 Agrupación por Hosts**: Organización automática de procesos por nombre de host
-- **🧹 Interfaz Limpia**: Pantallas limpias que solo muestran información relevante
+- **🧹 Interfaz Ultra-Limpia**: Solo información esencial, sin ruido visual
 - **🔍 Navegación Jerárquica**: Hosts → Procesos → Detalles → Ejecución
 - **📊 Estadísticas Visuales**: Información detallada con formato profesional
-- **🔐 Detección Automática de Contraseñas**: Manejo inteligente de prompts sudo con +90 patrones
+- **🔐 Detección Silenciosa de Contraseñas**: Manejo automático sin interrumpir la interfaz
 - **📁 Persistencia de Contexto**: Mantiene el directorio de trabajo entre comandos
-- **📄 Logging Detallado**: Registro completo de todas las ejecuciones
+- **📄 Logging Detallado**: Registro completo solo en archivos de log
 - **✅ Validación Avanzada**: Validación de inputs con mensajes descriptivos
-- **💡 Sugerencias Inteligentes**: Autocompletado y sugerencias de comandos comunes
-- **🎨 Interfaz Mejorada**: Diseño profesional con emojis y banners contextuales
+- **� Conexiones Paralelas**: Ejecuta comandos restantes mientras servidores están activos
+- **� Validación por Estado**: Confirma éxito basado en estado del proceso remoto
 
 ## 📋 Tabla de Contenidos
 
@@ -47,8 +67,9 @@ Un potente CLI para gestionar conexiones SSH y ejecutar comandos remotos con **m
 
 ## 🎯 Casos de Uso
 
-- **DevOps**: Automatización de despliegues y mantenimiento de servidores
-- **Administración de sistemas**: Gestión remota de múltiples servidores con navegación intuitiva
+- **🚀 Desarrollo**: Inicia servidores y ejecuta builds en paralelo automáticamente
+- **⚙️ DevOps**: Automatización de despliegues con validación de estado real
+- **🔧 Administración**: Gestión remota de múltiples servidores con interfaz limpia
 - **Desarrollo**: Ejecución de comandos en entornos de desarrollo remotos
 - **Monitoreo**: Verificación de estado y métricas de servidores
 - **Gestión de Equipos**: Interface amigable para usuarios no técnicos
