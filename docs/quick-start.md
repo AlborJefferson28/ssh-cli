@@ -47,7 +47,7 @@ Te llevará directamente al **menú principal interactivo** con navegación visu
 ║             |___  |___  |  _  |   | |___ | |___| | 
 ║             |_____|_____|_| |_|   |_____||_____|_| 
 ║                                                    
-║             🚀 SSH Remote Command Executor v1.1.1  
+║             🚀 SSH Remote Command Executor v1.2.0  
 ║                                                    
 ╚═════════════════════════════════════════════════════════════╝
 

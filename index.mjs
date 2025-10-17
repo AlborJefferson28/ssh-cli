@@ -2880,7 +2880,7 @@ async function showInteractiveMenu() {
     ║             |___  |___  |  _  |   | |___ | |___| | 
     ║             |_____|_____|_| |_|   |_____||_____|_| 
     ║                                                    
-    ║             🚀 SSH Remote Command Executor v1.1.1  
+    ║             🚀 SSH Remote Command Executor v1.2.0  
     ║                                                    
     ╠══════════════════════════════════════════════════════════════
     ║                                                        
@@ -3368,7 +3368,7 @@ async function main() {
     ║             |___  |___  |  _  |   | |___ | |___| | 
     ║             |_____|_____|_| |_|   |_____||_____|_| 
     ║                                                    
-    ║             🚀 SSH Remote Command Executor v1.1.1  
+    ║             🚀 SSH Remote Command Executor v1.2.0  
     ║                                                    
     ╠══════════════════════════════════════════════════════════════
     ║                                                        

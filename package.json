@@ -1,6 +1,6 @@
 {
   "name": "@alborjefferson/ssh-remote-executor",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "CLI para gestionar conexiones SSH y ejecutar comandos remotos con detección automática de contraseñas sudo",
   "main": "index.mjs",
   "type": "module",
