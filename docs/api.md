@@ -23,82 +23,188 @@ Función principal del CLI que maneja el enrutamiento de comandos y modo interac
 
 ---
 
-### `showInteractiveMenu()` **[NUEVO]**
-Función principal del modo interactivo con navegación completa.
+### `displayTaskProgress(host, totalTasks, commandList, taskStatuses, currentIndex)` **[NUEVO]**
+Función centralizada para mostrar el progreso de tareas de forma consistente y limpia.
 
-**Funcionalidades:**
-- Menú principal con pantalla limpia
-- Navegación visual con inquirer.js
-- Opciones organizadas por función
-- Limpieza automática de pantalla en transiciones
+**Parámetros:**
+- `host` (string): Nombre del host conectado
+- `totalTasks` (number): Número total de tareas
+- `commandList` (Array): Lista de comandos a ejecutar
+- `taskStatuses` (Array): Estados actuales de cada tarea
+- `currentIndex` (number, opcional): Índice del comando actual (-1 por defecto)
 
-**Opciones del menú:**
+**Comportamiento:**
+- Limpia pantalla automáticamente
+- Muestra información de conexión
+- Lista todas las tareas con emojis de estado
+- Deja espacio para loader animado
+
+**Estados de tarea:**
+- `⏳`: Tarea pendiente
+- `✅`: Tarea completada
+- `❌`: Tarea con error
+- `�`: Tarea ejecutándose en paralelo
+- `⏭️`: Tarea saltada
+
+**Ejemplo de output:**
+```
+✅ Conectado a servidor.com
+📝 Ejecutando 3 tarea(s)...
+
+  ✅ 1. git pull origin main
+  ⏳ 2. npm run build
+  ⏳ 3. pm2 restart all
+
+```
+
+---
+
+### `handleParallelCommandChoice(cmd, remainingCommands)` **[ACTUALIZADO]**
+Maneja la selección interactiva para comandos de larga duración con contador automático.
+
+**Parámetros:**
+- `cmd` (string): Comando detectado como de larga duración
+- `remainingCommands` (Array): Comandos restantes por ejecutar
+
+**Funcionalidades principales:**
+- ⚠️ **ELIMINADA opción de background** - Ya no disponible
+- ✅ **Contador automático de 45 segundos** para comandos con cola
+- ✅ **Selección manual** presionando cualquier tecla
+- ✅ **Auto-selección de modo paralelo** al agotar tiempo
+
+**Opciones disponibles:**
 ```javascript
 [
-  { name: "📋 Navegar procesos SSH por host", value: "list" },
-  { name: "🚀 Crear nuevo proceso SSH", value: "create" },
-  { name: "▶️  Ejecutar proceso (selección rápida)", value: "execute" },
-  { name: "🗑️  Eliminar proceso", value: "delete" },
-  { name: "📊 Ver estadísticas", value: "stats" },
-  { name: "🆘 Ver ayuda", value: "help" },
-  { name: "🚪 Salir", value: "exit" }
+  {
+    name: "� Ejecutar y crear conexión paralela cuando esté listo (RECOMENDADO)",
+    value: "parallel"
+  },
+  {
+    name: "⏭️  Saltar este comando",
+    value: "skip"
+  },
+  {
+    name: "🔧 Ejecutar y entrar en modo debug",
+    value: "debug"
+  },
+  {
+    name: "⏸️  Ejecutar y esperar (puede congelarse)",
+    value: "wait"
+  }
 ]
 ```
 
 **Retorno:**
 ```javascript
-Promise<void>
+Promise<string> // "parallel" | "skip" | "debug" | "wait"
 ```
 
 ---
 
-### `showInteractiveHostNavigation()` **[NUEVO]**
-Navegación jerárquica de hosts y procesos con interfaz visual.
+### `validateCommandByProcessState(conn, command, stream, options)` **[NUEVO]**
+Valida el éxito de un comando mediante análisis del estado del proceso remoto.
 
-**Flujo de navegación:**
-1. **Nivel 1**: Lista de hosts agrupados con conteo de procesos
-2. **Nivel 2**: Procesos específicos del host seleccionado
-3. **Nivel 3**: Detalles completos del proceso seleccionado
+**Parámetros:**
+- `conn` (SSH2.Client): Conexión SSH activa
+- `command` (string): Comando a validar
+- `stream` (SSH2.Stream): Stream del comando
+- `options` (Object): Opciones de validación
 
-**Características:**
-- Pantallas limpias en cada transición
-- Navegación bidireccional (adelante/atrás)
-- Información contextual en cada nivel
-- Opciones de salida en cualquier momento
+**Opciones:**
+```javascript
+{
+  timeoutSeconds: 30,        // Tiempo límite para validación
+  checkInterval: 5000,       // Intervalo de checks de estado
+  enableProcessCheck: true,  // Habilitar check de procesos
+  enablePortCheck: true      // Habilitar check de puertos
+}
+```
 
 **Retorno:**
 ```javascript
-Promise<void>
+Promise<{
+  success: boolean,
+  method: string, // 'process_state_validation' | 'exit_with_error' | 'critical_error'
+  duration?: number,
+  stateValidation?: Object,
+  reason?: string,
+  error?: string,
+  exitCode?: number
+}>
+```
+
+**Patrones de error crítico detectados:**
+- `command not found`
+- `permission denied`
+- `address already in use`
+- `port.*already.*use`
+- `failed to start`
+- `module not found`
+- `segmentation fault`
+
+---
+
+### `createParallelConnection(originalConfig)` **[NUEVO]**
+Crea una nueva conexión SSH paralela para comandos de larga duración.
+
+**Parámetros:**
+- `originalConfig` (Object): Configuración SSH base
+
+**Comportamiento:**
+- Establece conexión silenciosa (sin logs de conexión)
+- Usa mismas credenciales que conexión principal
+- Maneja keyboard-interactive automáticamente
+- Proporciona conexión independiente para comandos restantes
+
+**Retorno:**
+```javascript
+Promise<SSH2.Client> // Nueva conexión SSH establecida
 ```
 
 ---
 
-### `navigateHostProcesses(hostName, hostProcesses)` **[NUEVO]**
-Navega procesos específicos de un host seleccionado.
+### `executeRemainingCommands(parallelConn, remainingCommands, ...)` **[ACTUALIZADO]**
+Ejecuta comandos restantes en conexión SSH paralela con interfaz limpia.
 
 **Parámetros:**
-- `hostName` (string): Nombre del host seleccionado
-- `hostProcesses` (Array): Procesos filtrados del host
+- `parallelConn` (SSH2.Client): Conexión SSH paralela
+- `remainingCommands` (Array): Comandos por ejecutar
+- `currentDirectory` (string): Directorio de trabajo actual
+- `connectionConfig` (Object): Configuración de conexión
+- `logStream` (WriteStream): Stream de logs
+- `executionLog` (Array): Log de ejecución
+- `taskStatuses` (Array): Estados de tareas
+- `startIndex` (number): Índice de inicio en la lista original
 
-**Comportamiento:**
-- Limpia pantalla antes de mostrar
-- Muestra información del host actual
-- Lista procesos con conteo de comandos
-- Permite volver a lista de hosts
+**Funcionalidades:**
+- ✅ **Interfaz limpia** usando `displayTaskProgress()`
+- ✅ **Detección anidada** de comandos de larga duración
+- ✅ **Manejo recursivo** de conexiones paralelas
+- ✅ **Loaders animados** para progreso visual
+- ✅ **Integración completa** con sistema de validación
+
+**Retorno:**
+```javascript
+Promise<{ completed: number }>
+```
 
 ---
 
-### `showProcessDetails(process, hostName)` **[NUEVO]**
-Muestra detalles completos de un proceso específico.
+### `createPasswordTimeoutHandler(stream, password, commandName, logStream)` **[ACTUALIZADO]**
+Crea manejador silencioso de timeouts para contraseñas.
 
-**Parámetros:**
-- `process` (Object): Objeto del proceso SSH
-- `hostName` (string): Nombre del host contenedor
+**Cambios principales:**
+- ❌ **Eliminados mensajes de consola** `🔐 Enviando contraseña automáticamente`
+- ✅ **Solo registro en logs** para mantener interfaz limpia
+- ✅ **Funcionalidad preservada** de detección y envío automático
 
-**Información mostrada:**
-```javascript
-{
-  nombre: string,
+**Comportamiento:**
+- Detecta prompts de contraseña
+- Envía contraseña automáticamente
+- Registra acciones solo en log files
+- No interrumpe la interfaz visual
+
+---
   host: string,
   servidor: "host:puerto",
   usuario: string,
