@@ -1,8 +1,215 @@
 # 💡 Ejemplos de Uso
 
-## � Ejemplos con Modo Debug
+## 🔗 Ejemplos con Conexiones Paralelas (NUEVO v1.2.0)
 
-### 1. Deployment con Error y Debug
+### 1. Desarrollo Full-Stack Automático
+
+**Escenario:** Iniciar servidor backend y frontend en paralelo automáticamente
+
+**Ejecutar:** `node index.mjs`
+
+**Proceso de Desarrollo:**
+1. Crear proceso con comandos:
+   ```bash
+   cd /app/backend
+   npm install
+   npm run dev          # ← Comando de larga duración detectado
+   cd /app/frontend
+   npm install
+   npm start           # ← Otro servidor detectado
+   echo "Desarrollo listo"
+   ```
+
+2. **Detección Automática:**
+   ```
+   ✅ Conectado a dev-server.local
+   📝 Ejecutando 6 tarea(s)...
+
+     ✅ 1. cd /app/backend
+     ✅ 2. npm install
+     ⏳ 3. npm run dev
+
+   ⠦ Ejecutando: npm run dev
+
+   ⚠️  Ejecución en primer plano detectada: npm run dev
+   📋 Comandos restantes: 3
+   ⏰ Auto-selección en 45 segundos...
+   ```
+
+3. **Selección Automática de Paralelo:**
+   ```
+   🔗 Tiempo agotado, ejecutando en modo paralelo automáticamente...
+
+   ✅ Conectado a dev-server.local
+   📝 Ejecutando 6 tarea(s)...
+
+     ✅ 1. cd /app/backend
+     ✅ 2. npm install
+     🔗 3. npm run dev
+     ⏳ 4. cd /app/frontend
+
+   ⠦ Ejecutando: cd /app/frontend
+   ```
+
+4. **Conexión Paralela Activa:**
+   ```
+   ✅ Conexión paralela activa
+   📝 Ejecutando comandos restantes...
+
+     ✅ 1. cd /app/frontend
+     ✅ 2. npm install
+     ⏳ 3. npm start
+
+   ⠦ Ejecutando: npm start
+
+   ⚠️  Ejecución en primer plano detectada: npm start
+   � Comandos restantes: 1
+   ```
+
+5. **Resultado Final:**
+   ```
+   ✅ Proceso completado exitosamente
+   🔗 Conexiones paralelas: 2 activas
+   📊 Comandos ejecutados: 6/6
+   � Tiempo total: 45 segundos
+
+   Resumen:
+     ✅ Backend servidor ejecutándose (puerto 3001)
+     ✅ Frontend servidor ejecutándose (puerto 3000)
+     ✅ Comandos restantes completados
+   ```
+
+### 2. Deployment con Validación por Estado
+
+**Escenario:** Deploy de aplicación con validación automática
+
+**Proceso de Deployment:**
+1. Comandos configurados:
+   ```bash
+   cd /var/www/app
+   git pull origin production
+   npm run build
+   pm2 restart app       # ← Servidor detectado
+   nginx -t
+   sudo systemctl reload nginx
+   ```
+
+2. **Validación por Estado del Proceso:**
+   ```
+   ✅ Conectado a prod-server.com
+   📝 Ejecutando 6 tarea(s)...
+
+     ✅ 1. cd /var/www/app
+     ✅ 2. git pull origin production
+     ✅ 3. npm run build
+     ⏳ 4. pm2 restart app
+
+   ⠦ Ejecutando: pm2 restart app
+
+   🎯 Validando estado del proceso...
+   ✅ Proceso detectado: app (PID: 15234)
+   ✅ Puerto 3000 respondiendo correctamente
+   ✅ Aplicación lista y funcionando
+   ```
+
+3. **Interfaz Limpia (Sin Mensajes Invasivos):**
+   ```
+   # ANTES (v1.1.x) - Mensajes invasivos:
+   🔐 Enviando contraseña automáticamente para: sudo systemctl reload nginx
+   🔧 Ejecutando comando y entrando en modo debug...
+   ⏭️  Comando saltado: nginx -t
+
+   # AHORA (v1.2.0) - Interfaz limpia:
+   ✅ Conectado a prod-server.com
+   📝 Ejecutando 6 tarea(s)...
+
+     ✅ 4. pm2 restart app
+     ✅ 5. nginx -t
+     ⏳ 6. sudo systemctl reload nginx
+
+   ⠦ Ejecutando: sudo systemctl reload nginx
+   ```
+
+## � Ejemplos con Validación Inteligente
+
+### 3. Detección de Errores Críticos
+
+**Escenario:** Comando falla inmediatamente vs. comando que necesita tiempo
+
+**Comando que falla:**
+```bash
+invalid-command-that-does-not-exist
+```
+
+**Resultado:**
+```
+❌ Error crítico detectado: command not found
+🚨 Fallo inmediato en: invalid-command-that-does-not-exist
+⏱️  Tiempo de detección: 0.2 segundos
+```
+
+**Comando de servidor:**
+```bash
+npm run dev
+```
+
+**Resultado:**
+```
+⠦ Ejecutando: npm run dev
+🎯 Validando por estado del proceso...
+⏱️  Tiempo de validación: 30 segundos
+✅ Servidor detectado y validado como activo
+🔗 Listo para conexión paralela
+```
+
+## 🧹 Ejemplos de Interfaz Limpia
+
+### 4. Comparación de Interfaces
+
+**ANTES (v1.1.x) - Interfaz con ruido:**
+```
+� Enviando contraseña automáticamente para: sudo apt update
+✅ Conectado a server.com
+🔐 Detectado prompt sudo (confianza: 95%)
+📝 Ejecutando 3 tarea(s)...
+� [DEBUG MODE] Detectado prompt de contraseña
+⏭️  Comando saltado: optional-command
+🔧 Ejecutando comando y entrando en modo debug...
+  ✅ 1. sudo apt update
+  ⏳ 2. npm install
+  ⏳ 3. npm start
+[STDERR] npm WARN deprecated package@1.0.0
+🔐 Contraseña enviada automáticamente (Formato típico - )
+⠦ Ejecutando: npm install
+```
+
+**AHORA (v1.2.0) - Interfaz ultra-limpia:**
+```
+✅ Conectado a server.com
+📝 Ejecutando 3 tarea(s)...
+
+  ✅ 1. sudo apt update
+  ⏳ 2. npm install
+  ⏳ 3. npm start
+
+⠦ Ejecutando: npm install
+```
+
+**Logs detallados (solo en archivos):**
+```bash
+# logs/ssh-log-1234567890.txt
+[AUTO-RESPONSE] Contraseña enviada automáticamente (Detectado prompt sudo - )
+=== COMANDO: sudo apt update ===
+DIRECTORIO ACTUAL: /home/user
+COMANDO EJECUTADO: cd /home/user && sudo apt update
+[sudo] password for user: 
+Reading package lists... Done
+=== FIN COMANDO (código: 0) ===
+```
+
+## 📊 Ejemplos con Modo Debug
+
+### 5. Deployment con Error y Debug
 
 **Escenario:** Un proceso de deployment falla en medio de la ejecución
 
@@ -18,37 +225,19 @@
    sudo systemctl status nginx
    ```
 
-2. **Error Detectado:**
+2. **Error Detectado (Interfaz Limpia):**
    ```
-   ⚠️  Error detectado en el comando: sudo systemctl restart nginx
+   ❌ Error detectado en comando: sudo systemctl restart nginx
    🔧 Código de salida: 1
-   🔧 ¿Cómo deseas proceder?
-     > 🔧 Entrar en modo debug
+
+   � ¿Cómo deseas proceder?
+     > � Entrar en modo debug
        ⏭️  Saltar este comando y continuar
        🚪 Finalizar proceso
    ```
 
 3. **Modo Debug Activo:**
    ```
-   ╔═════════════════════════════════════════════════════════════╗
-   ║                🔧 MODO DEBUG SSH                        ║
-   ╚═════════════════════════════════════════════════════════════╝
-   🏠 Host: Servidor Web
-   🌐 Servidor: web-server.empresa.com:22
-   👤 Usuario: deploy
-   📊 Comando actual: 4/5
-   ⚠️  Error detectado en: sudo systemctl restart nginx
-   
-   📋 LOG DE COMANDOS EJECUTADOS:
-   ✅ 1. cd /var/www/app
-   ✅ 2. git pull origin main
-   ✅ 3. npm install
-   ❌ 4. sudo systemctl restart nginx
-   
-   🔧 Selecciona una acción:
-     > ⌨️  Ejecutar comando debug
-       📋 Ver log completo
-       🔄 Salir del modo debug (volver al proceso)
        🚪 Finalizar conexión completamente
    ```
 
@@ -538,7 +727,7 @@ node index.mjs comando-inexistente
 ║             |___  |___  |  _  |   | |___ | |___| | 
 ║             |_____|_____|_| |_|   |_____||_____|_| 
 ║                                                    
-║             🚀 SSH Remote Command Executor v1.1.1  
+║             🚀 SSH Remote Command Executor v1.2.0  
 ║                                                    
 ╚═════════════════════════════════════════════════════════════╝
 
